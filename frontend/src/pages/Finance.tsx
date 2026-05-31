@@ -10,6 +10,15 @@ export default function Finance() {
   const { workers, updateWorker } = useWorkers();
   const { clients } = useClients();
   const [activeTab, setActiveTab] = useState('payroll');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [newTx, setNewTx] = useState<Partial<Transaction>>({
+    date: new Date().toISOString().split('T')[0],
+    type: 'Expense',
+    category: 'Other',
+    description: '',
+    amount: 0,
+  });
 
   const tabs = [
     { id: 'payroll', label: 'Payroll & Advances' },
@@ -66,6 +75,28 @@ export default function Finance() {
     }
   };
 
+  const handleAddTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    await addTransaction({
+      id: `TRX-${Date.now().toString().slice(-5)}`,
+      date: newTx.date || new Date().toISOString().split('T')[0],
+      type: newTx.type || 'Expense',
+      category: newTx.category || 'Other',
+      description: newTx.description || '',
+      amount: Number(newTx.amount) || 0,
+    } as Transaction);
+    setIsSubmitting(false);
+    setIsModalOpen(false);
+    setNewTx({
+      date: new Date().toISOString().split('T')[0],
+      type: 'Expense',
+      category: 'Other',
+      description: '',
+      amount: 0,
+    });
+  };
+
   const handleGiveAdvance = (worker: any) => {
     const amountStr = window.prompt(`Enter cash advance amount for ${worker.name}:`);
     if (!amountStr) return;
@@ -109,7 +140,10 @@ export default function Finance() {
             <Download size={18} />
             <span>Export Report</span>
           </button>
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
+          >
             <Plus size={18} />
             <span>New Transaction</span>
           </button>
@@ -304,6 +338,105 @@ export default function Finance() {
           )}
         </div>
       </div>
+
+      {/* New Transaction Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800">New Transaction</h2>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddTransaction} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Type</label>
+                  <select 
+                    value={newTx.type}
+                    onChange={(e) => setNewTx({...newTx, type: e.target.value as any})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="Expense">Expense</option>
+                    <option value="Income">Income</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Date</label>
+                  <input 
+                    type="date" 
+                    value={newTx.date}
+                    onChange={(e) => setNewTx({...newTx, date: e.target.value})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Category</label>
+                <select 
+                  value={newTx.category}
+                  onChange={(e) => setNewTx({...newTx, category: e.target.value})}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  <option value="Payroll">Payroll</option>
+                  <option value="Material">Material</option>
+                  <option value="Client Payment">Client Payment</option>
+                  <option value="Equipment">Equipment</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Amount (₹)</label>
+                <input 
+                  type="number" 
+                  value={newTx.amount || ''}
+                  onChange={(e) => setNewTx({...newTx, amount: Number(e.target.value)})}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g. 5000"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Description</label>
+                <textarea 
+                  value={newTx.description}
+                  onChange={(e) => setNewTx({...newTx, description: e.target.value})}
+                  className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Brief details about the transaction..."
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 px-4 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Saving...' : 'Save Transaction'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
