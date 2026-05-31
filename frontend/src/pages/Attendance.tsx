@@ -1,42 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, CheckCircle, XCircle, Clock, AlertCircle, MapPin, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, CheckCircle, XCircle, Clock, AlertCircle, MapPin, CheckCircle2, Unlock } from 'lucide-react';
 import { useWorkers } from '../store/useWorkers';
 import { useSites } from '../store/useSites';
+import { useAuth } from '../store/useAuth';
 
 export default function Attendance() {
   const { workers, updateWorker } = useWorkers();
   const { sites } = useSites();
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [isProcessed, setIsProcessed] = useState(false);
+  const { user } = useAuth();
   
-  const [records, setRecords] = useState(
-    workers.map(w => ({
-      id: w.id,
-      name: w.name,
-      skill: w.skill,
-      site: w.site,
-      baseWage: w.dailyRate,
-      status: w.status === 'On Leave' ? 'Absent' : 'Present',
-      overtime: 0
-    }))
-  );
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [records, setRecords] = useState<any[]>([]);
 
-  // If workers change from another page and we haven't processed yet, update records
+  // 1. Derive isProcessed directly from Database State
+  // A day is processed if any active worker has an attendance log for this date.
+  const isProcessedForDate = workers.length > 0 && workers.some(w => w.attendance?.some(a => a.date === date));
+  const isProcessed = isProcessedForDate && !isUnlocked;
+  
+  // Reload records whenever date changes or worker list is updated
   useEffect(() => {
-    if (!isProcessed) {
-      setRecords(
-        workers.map(w => ({
+    setRecords(
+      workers.map(w => {
+        const pastRecord = w.attendance?.find(a => a.date === date);
+        return {
           id: w.id,
           name: w.name,
           skill: w.skill,
           site: w.site,
           baseWage: w.dailyRate,
-          status: w.status === 'On Leave' ? 'Absent' : 'Present',
+          status: pastRecord ? pastRecord.status : (w.status === 'On Leave' ? 'Absent' : 'Present'),
           overtime: 0
-        }))
-      );
-    }
-  }, [workers, isProcessed]);
+        };
+      })
+    );
+    setIsUnlocked(false);
+  }, [workers, date]);
 
   const activeSiteNames = ['Unassigned', ...sites.filter(s => s.status === 'Active').map(s => s.name)];
 
@@ -50,53 +49,70 @@ export default function Attendance() {
     setRecords(records.map(r => r.id === id ? { ...r, site: newSite } : r));
   };
 
-  const calculateWage = (record: any) => {
-    if (record.status === 'Absent') return 0;
-    let base = record.status === 'Half-Day' ? record.baseWage / 2 : record.baseWage;
-    let otPay = record.overtime * (record.baseWage / 8); // Assuming 8 hour shift
+  const calculateWage = (record: any, customStatus?: string) => {
+    const status = customStatus || record.status;
+    if (status === 'Absent') return 0;
+    let base = status === 'Half-Day' ? record.baseWage / 2 : record.baseWage;
+    let otPay = record.overtime * (record.baseWage / 8); 
     return Math.round(base + otPay);
   };
 
-  const handleSaveChanges = (isEOD = false) => {
-    // Sync current attendance draft to the master worker list
+  const handleSaveChanges = (isEOD = false, isEdit = false) => {
     records.forEach(record => {
-      // Find current worker to get existing balance
       const currentWorker = workers.find(w => w.id === record.id);
-      
+      if (!currentWorker) return;
+
       let updatePayload: any = {
         site: record.site,
         status: record.status === 'Absent' ? 'On Leave' : 'Active'
       };
 
-      // If this is an End of Day process, add today's wage to their pending balance
-      if (isEOD && currentWorker) {
+      if (isEOD) {
+        // Standard Checkout: Log Salary and Add to History
         updatePayload.balance = (currentWorker.balance || 0) + calculateWage(record);
+        updatePayload.attendance = [
+            ...(currentWorker.attendance || []), 
+            { date: date, status: record.status }
+        ];
+      } else if (isEdit) {
+        // Admin Historical Override: Recalculate difference and update History
+        const oldRecord = currentWorker.attendance?.find(a => a.date === date);
+        if (oldRecord) {
+           const oldWage = calculateWage(record, oldRecord.status);
+           const newWage = calculateWage(record);
+           const diff = newWage - oldWage;
+           
+           updatePayload.balance = (currentWorker.balance || 0) + diff;
+           updatePayload.attendance = currentWorker.attendance?.map(a => a.date === date ? { date, status: record.status } : a);
+        } else {
+           // If somehow they had no record, treat as new
+           updatePayload.balance = (currentWorker.balance || 0) + calculateWage(record);
+           updatePayload.attendance = [...(currentWorker.attendance || []), { date: date, status: record.status }];
+        }
       }
 
       updateWorker(record.id, updatePayload);
     });
     
-    if (!isEOD) {
-      alert('Attendance and site assignments saved successfully!');
+    if (isEOD) {
+      alert('End of day processed! Worker histories locked and daily salaries added to their accounts.');
+      setIsUnlocked(false);
+    } else if (isEdit) {
+      alert('Historical attendance updated and balances corrected successfully!');
+      setIsUnlocked(false);
+    } else {
+      alert('Attendance and site assignments saved temporarily!');
     }
-  };
-
-  const handleProcessEOD = () => {
-    // Simulating 5:00 PM IST chron job
-    handleSaveChanges(true); // Pass true to trigger salary accumulation
-    setIsProcessed(true);
-    alert('End of day processed! Worker histories locked and daily salaries added to their accounts.');
   };
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update time every minute
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  // Check if it's past 5:00 PM IST (17:00)
   const isPast5PM = () => {
     const istHour = parseInt(
       currentTime.toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour12: false, hour: 'numeric' })
@@ -104,7 +120,9 @@ export default function Attendance() {
     return istHour >= 17;
   };
 
-  const canProcess = isPast5PM();
+  // Only check time if we are looking at TODAY. Past days can't be EOD processed again.
+  const isToday = date === new Date().toISOString().split('T')[0];
+  const canProcess = isPast5PM() && isToday && !isProcessedForDate;
 
   return (
     <div className="space-y-6">
@@ -121,31 +139,52 @@ export default function Attendance() {
               value={date}
               onChange={(e) => setDate(e.target.value)}
               className="bg-transparent text-slate-700 font-medium focus:outline-none"
-              disabled={isProcessed}
             />
           </div>
-          {!isProcessed && (
+          
+          {!isProcessed && !isUnlocked && isToday && (
             <button 
-              onClick={() => handleSaveChanges(false)}
+              onClick={() => handleSaveChanges(false, false)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm"
             >
-              Save Changes
+              Save Draft
+            </button>
+          )}
+
+          {isUnlocked && (
+            <button 
+              onClick={() => handleSaveChanges(false, true)}
+              className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm"
+            >
+              Save Admin Override
             </button>
           )}
         </div>
       </div>
 
-      {isProcessed && (
-        <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg flex items-start gap-3">
-          <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={20} />
-          <div>
-            <h3 className="font-semibold text-emerald-800">Day Closed (5:00 PM Checkout)</h3>
-            <p className="text-sm text-emerald-700">Wages have been calculated and histories updated. No further edits can be made today.</p>
+      {isProcessedForDate && !isUnlocked && (
+        <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg flex justify-between items-center">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="text-emerald-500 shrink-0 mt-0.5" size={20} />
+            <div>
+              <h3 className="font-semibold text-emerald-800">Day Locked</h3>
+              <p className="text-sm text-emerald-700">Wages have been calculated and histories updated. No further edits can be made.</p>
+            </div>
           </div>
+          
+          {/* Admin Unlock Button */}
+          {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
+            <button 
+              onClick={() => setIsUnlocked(true)}
+              className="flex items-center gap-2 text-rose-700 bg-rose-100 hover:bg-rose-200 px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              <Unlock size={16} /> Unlock (Admin)
+            </button>
+          )}
         </div>
       )}
 
-      {!isProcessed && !canProcess && (
+      {!isProcessed && !canProcess && isToday && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-3">
           <Clock className="text-amber-500 shrink-0 mt-0.5" size={20} />
           <div>
@@ -238,10 +277,11 @@ export default function Attendance() {
           </table>
         </div>
         
-        {!isProcessed && (
+        {/* End of Day Processor Button */}
+        {!isProcessed && isToday && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
             <button 
-              onClick={handleProcessEOD}
+              onClick={() => handleSaveChanges(true, false)}
               disabled={!canProcess}
               className={`px-6 py-2.5 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-md ${
                 canProcess 
