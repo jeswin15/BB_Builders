@@ -17,7 +17,7 @@ export default function Login() {
       formData.append('username', email);
       formData.append('password', password);
 
-      const baseUrl = import.meta.env.PROD ? '/api' : 'http://localhost:8000/api';
+      const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api');
       const response = await fetch(`${baseUrl}/auth/token`, {
         method: 'POST',
         headers: {
