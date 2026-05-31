@@ -11,7 +11,8 @@ export default function Workers() {
   const [editingWorker, setEditingWorker] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [newWorker, setNewWorker] = useState<any>({
-    id: '', name: '', skill: 'Helper', phone: '', site: 'Unassigned', wage: 500, status: 'Active'
+    id: '', name: '', skill: 'Helper', phone: '', site: 'Unassigned', dailyRate: 500, status: 'Active',
+    joinDate: new Date().toISOString().split('T')[0], advances: 0, balance: 0, attendance: []
   });
 
   const handleSave = (e: React.FormEvent) => {
@@ -41,7 +42,8 @@ export default function Workers() {
     const nextId = `WK-2026-${nextIdNum.toString().padStart(3, '0')}`;
     
     setNewWorker({
-      id: nextId, name: '', skill: 'Helper', phone: '', site: 'Unassigned', wage: 500, status: 'Active'
+      id: nextId, name: '', skill: 'Helper', phone: '', site: 'Unassigned', dailyRate: 500, status: 'Active',
+      joinDate: new Date().toISOString().split('T')[0], advances: 0, balance: 0, attendance: []
     });
     setIsRegistering(true);
   };
@@ -139,8 +141,8 @@ export default function Workers() {
                 <label className="text-sm font-semibold text-slate-700">Daily Base Wage (₹)</label>
                 <input 
                   type="number" 
-                  value={activeWorker.wage}
-                  onChange={(e) => handleInputChange('wage', Number(e.target.value))}
+                  value={activeWorker.dailyRate}
+                  onChange={(e) => handleInputChange('dailyRate', Number(e.target.value))}
                   className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -255,7 +257,7 @@ export default function Workers() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1 text-slate-800 font-bold">
                       <IndianRupee size={14} className="text-slate-500" />
-                      {worker.wage}
+                      {worker.dailyRate}
                     </div>
                   </td>
                   <td className="px-6 py-4">

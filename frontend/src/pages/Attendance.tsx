@@ -15,7 +15,7 @@ export default function Attendance() {
       name: w.name,
       skill: w.skill,
       site: w.site,
-      baseWage: w.wage,
+      baseWage: w.dailyRate,
       status: w.status === 'On Leave' ? 'Absent' : 'Present',
       overtime: 0
     }))
@@ -30,7 +30,7 @@ export default function Attendance() {
           name: w.name,
           skill: w.skill,
           site: w.site,
-          baseWage: w.wage,
+          baseWage: w.dailyRate,
           status: w.status === 'On Leave' ? 'Absent' : 'Present',
           overtime: 0
         }))
