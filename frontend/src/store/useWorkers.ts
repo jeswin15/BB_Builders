@@ -20,6 +20,7 @@ interface WorkersState {
   fetchWorkers: () => Promise<void>;
   addWorker: (worker: Worker) => Promise<void>;
   updateWorker: (id: string, updatedData: Partial<Worker>) => Promise<void>;
+  deleteWorker: (id: string) => Promise<void>;
 }
 
 export const useWorkers = create<WorkersState>((set) => ({
@@ -50,6 +51,16 @@ export const useWorkers = create<WorkersState>((set) => ({
       }));
     } catch (error) {
       console.error('Failed to update worker:', error);
+    }
+  },
+  deleteWorker: async (id) => {
+    try {
+      await api.delete(`/workers/${id}`);
+      set((state) => ({
+        workers: state.workers.filter((w) => w.id !== id)
+      }));
+    } catch (error) {
+      console.error('Failed to delete worker:', error);
     }
   },
 }));

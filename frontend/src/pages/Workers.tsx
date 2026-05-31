@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, Search, UserCheck, Phone, IndianRupee, ShieldAlert, ArrowLeft, Save } from 'lucide-react';
+import { Plus, Search, UserCheck, Phone, IndianRupee, ShieldAlert, ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useWorkers } from '../store/useWorkers';
 import { useSites } from '../store/useSites';
+import { useAuth } from '../store/useAuth';
 
 export default function Workers() {
-  const { workers, addWorker, updateWorker } = useWorkers();
+  const { user } = useAuth();
+  const { workers, addWorker, updateWorker, deleteWorker } = useWorkers();
   const { sites } = useSites();
   const activeSiteNames = ['Unassigned', ...sites.filter(s => s.status === 'Active').map(s => s.name)];
 
@@ -37,8 +39,10 @@ export default function Workers() {
   };
 
   const handleOpenRegister = () => {
-    // Auto-generate next ID based on the highest existing ID
-    const nextIdNum = Math.max(...workers.map(w => parseInt(w.id.split('-')[2]))) + 1;
+    // Auto-generate next ID safely even if workers is empty
+    const nextIdNum = workers.length > 0 
+      ? Math.max(...workers.map(w => parseInt(w.id.split('-')[2]) || 0)) + 1 
+      : 1;
     const nextId = `WK-2026-${nextIdNum.toString().padStart(3, '0')}`;
     
     setNewWorker({
@@ -269,12 +273,27 @@ export default function Workers() {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <button 
-                      onClick={() => setEditingWorker(worker)}
-                      className="text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors border border-blue-200 hover:bg-blue-50 px-3 py-1.5 rounded-md"
-                    >
-                      Edit Profile
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => setEditingWorker(worker)}
+                        className="text-blue-600 hover:text-blue-800 font-bold text-sm transition-colors border border-blue-200 hover:bg-blue-50 px-3 py-1.5 rounded-md flex-1"
+                      >
+                        Edit Profile
+                      </button>
+                      {(user?.role === 'Admin' || user?.role === 'Super Admin') && (
+                        <button 
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete ${worker.name}?`)) {
+                              deleteWorker(worker.id);
+                            }
+                          }}
+                          className="text-rose-600 hover:text-rose-800 transition-colors border border-rose-200 hover:bg-rose-50 p-1.5 rounded-md"
+                          title="Delete Worker"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
