@@ -31,15 +31,23 @@ app.include_router(materials.router)
 app.include_router(equipment.router)
 app.include_router(documents.router)
 
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse
+
 frontend_dist = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'dist')
 if os.path.exists(frontend_dist):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
     
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        file_path = os.path.join(frontend_dist, full_path)
+    @app.exception_handler(404)
+    async def custom_404_handler(request: Request, exc: StarletteHTTPException):
+        if request.url.path.startswith("/api/"):
+            return JSONResponse({"detail": exc.detail}, status_code=404)
+        
+        # Check if the file actually exists (for non-asset static files like favicon)
+        file_path = os.path.join(frontend_dist, request.url.path.lstrip("/"))
         if os.path.exists(file_path) and os.path.isfile(file_path):
             return FileResponse(file_path)
+            
         return FileResponse(os.path.join(frontend_dist, "index.html"))
 else:
     @app.get("/")
