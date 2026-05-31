@@ -49,6 +49,36 @@ export default function Sites() {
     window.print();
   };
 
+  const downloadCSV = () => {
+    const siteTransactions = transactions.filter(t => t.site === viewingSite.name)
+                                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    if (siteTransactions.length === 0) {
+      alert("No transactions to download for this site.");
+      return;
+    }
+
+    const headers = ["Date", "Type", "Category", "Description", "Amount (INR)", "Site"];
+    const rows = siteTransactions.map(tx => [
+      tx.date,
+      tx.type,
+      tx.category,
+      `"${tx.description.replace(/"/g, '""')}"`,
+      tx.amount,
+      `"${tx.site || ''}"`
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${viewingSite.name.replace(/\s+/g, '_')}_Ledger_Logs.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
   };
@@ -87,9 +117,9 @@ export default function Sites() {
               <Printer size={18} />
               <span>Print Ledger</span>
             </button>
-            <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+            <button onClick={downloadCSV} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               <Download size={18} />
-              <span>Save PDF</span>
+              <span>Download CSV</span>
             </button>
           </div>
         </div>
