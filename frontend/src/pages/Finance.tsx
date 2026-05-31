@@ -4,11 +4,13 @@ import { useFinance } from '../store/useFinance';
 import type { Transaction } from '../store/useFinance';
 import { useWorkers } from '../store/useWorkers';
 import { useClients } from '../store/useClients';
+import { useSites } from '../store/useSites';
 
 export default function Finance() {
   const { transactions, addTransaction } = useFinance();
   const { workers, updateWorker } = useWorkers();
   const { clients } = useClients();
+  const { sites } = useSites();
   const [activeTab, setActiveTab] = useState('payroll');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,6 +20,7 @@ export default function Finance() {
     category: 'Other',
     description: '',
     amount: 0,
+    site: ''
   });
 
   const tabs = [
@@ -85,6 +88,7 @@ export default function Finance() {
       category: newTx.category || 'Other',
       description: newTx.description || '',
       amount: Number(newTx.amount) || 0,
+      site: newTx.site || undefined
     } as Transaction);
     setIsSubmitting(false);
     setIsModalOpen(false);
@@ -94,6 +98,7 @@ export default function Finance() {
       category: 'Other',
       description: '',
       amount: 0,
+      site: ''
     });
   };
 
@@ -378,19 +383,34 @@ export default function Finance() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Category</label>
-                <select 
-                  value={newTx.category}
-                  onChange={(e) => setNewTx({...newTx, category: e.target.value})}
-                  className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                >
-                  <option value="Payroll">Payroll</option>
-                  <option value="Material">Material</option>
-                  <option value="Client Payment">Client Payment</option>
-                  <option value="Equipment">Equipment</option>
-                  <option value="Other">Other</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Category</label>
+                  <select 
+                    value={newTx.category}
+                    onChange={(e) => setNewTx({...newTx, category: e.target.value})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="Payroll">Payroll</option>
+                    <option value="Material">Material</option>
+                    <option value="Client Payment">Client Payment</option>
+                    <option value="Equipment">Equipment</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700">Assign to Site (Optional)</label>
+                  <select 
+                    value={newTx.site || ''}
+                    onChange={(e) => setNewTx({...newTx, site: e.target.value})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  >
+                    <option value="">-- General / None --</option>
+                    {sites.map(s => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="space-y-2">

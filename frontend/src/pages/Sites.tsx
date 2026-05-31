@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
-import { Plus, HardHat, MapPin, Users, CheckCircle2, ArrowLeft, Save } from 'lucide-react';
+import { Plus, HardHat, MapPin, Users, CheckCircle2, ArrowLeft, Save, Printer, Download, Receipt, TrendingUp, TrendingDown } from 'lucide-react';
 import { useSites } from '../store/useSites';
 import { useWorkers } from '../store/useWorkers';
+import { useFinance } from '../store/useFinance';
+
+import logoImg from '../assets/BB Builder Logo.png';
 
 export default function Sites() {
   const { sites, addSite, updateSite } = useSites();
   const { workers } = useWorkers();
+  const { transactions } = useFinance();
+  
   const [isAdding, setIsAdding] = useState(false);
   const [editingSite, setEditingSite] = useState<any>(null);
+  const [viewingSite, setViewingSite] = useState<any>(null);
+  
   const [newSite, setNewSite] = useState<any>({
     name: '', project: '', location: '', engineers: 0, workers: 0, status: 'Active'
   });
@@ -38,6 +45,14 @@ export default function Sites() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
+  };
+
   const activeSite = isAdding ? newSite : editingSite;
 
   const handleInputChange = (field: string, value: string | number) => {
@@ -48,6 +63,124 @@ export default function Sites() {
     }
   };
 
+  // ================= VIEW SITE LOGS / LEDGER =================
+  if (viewingSite) {
+    const siteTransactions = transactions.filter(t => t.site === viewingSite.name)
+                                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    const totalExpenses = siteTransactions.filter(t => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = siteTransactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
+    const balance = totalIncome - totalExpenses;
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
+          <button 
+            onClick={() => setViewingSite(null)}
+            className="flex items-center gap-2 text-slate-500 hover:text-blue-600 font-semibold transition-colors"
+          >
+            <ArrowLeft size={20} />
+            Back to Sites List
+          </button>
+          <div className="flex gap-3">
+            <button onClick={handlePrint} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors">
+              <Printer size={18} />
+              <span>Print Ledger</span>
+            </button>
+            <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <Download size={18} />
+              <span>Save PDF</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Printable Ledger Area */}
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden max-w-4xl mx-auto print:shadow-none print:border-none print:w-full">
+          <div className="p-10">
+            
+            <div className="flex justify-between items-start border-b border-slate-200 pb-8">
+              <div className="flex items-center gap-3">
+                <img src={logoImg} alt="BB Builders Logo" className="h-20 object-contain" />
+                <div>
+                  <p className="text-sm text-slate-500 font-medium">Enterprise Construction & Management</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <h2 className="text-3xl font-light text-slate-400 uppercase tracking-widest">Site Ledger</h2>
+                <p className="text-slate-800 font-semibold mt-2">Generated: <span className="font-mono text-slate-600">{new Date().toLocaleDateString()}</span></p>
+              </div>
+            </div>
+
+            <div className="mt-8 mb-8">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Project Site Details</h3>
+              <p className="text-2xl font-bold text-slate-800">{viewingSite.name}</p>
+              <p className="text-slate-600 font-medium mt-1">Project: {viewingSite.project}</p>
+              <p className="text-sm text-slate-600 flex items-center gap-1 mt-1">
+                <MapPin size={14} /> {viewingSite.location}
+              </p>
+            </div>
+
+            {/* Metrics */}
+            <div className="grid grid-cols-3 gap-4 mb-8 print:border print:border-slate-200 print:rounded-lg print:p-4">
+              <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-100 print:border-none print:bg-transparent print:p-0">
+                <p className="text-xs font-bold text-emerald-600 uppercase flex items-center gap-1"><TrendingUp size={14} /> Total Funds Assigned</p>
+                <p className="text-2xl font-black text-emerald-700 mt-1">{formatCurrency(totalIncome)}</p>
+              </div>
+              <div className="bg-rose-50 rounded-lg p-4 border border-rose-100 print:border-none print:bg-transparent print:p-0">
+                <p className="text-xs font-bold text-rose-600 uppercase flex items-center gap-1"><TrendingDown size={14} /> Total Expenses Recorded</p>
+                <p className="text-2xl font-black text-rose-700 mt-1">{formatCurrency(totalExpenses)}</p>
+              </div>
+              <div className={`${balance >= 0 ? 'bg-blue-50 border-blue-100 text-blue-700' : 'bg-rose-50 border-rose-100 text-rose-700'} rounded-lg p-4 border print:border-none print:bg-transparent print:p-0`}>
+                <p className="text-xs font-bold uppercase flex items-center gap-1"><Receipt size={14} /> Net Balance</p>
+                <p className="text-2xl font-black mt-1">{formatCurrency(balance)}</p>
+              </div>
+            </div>
+
+            <table className="w-full text-left mb-8">
+              <thead className="border-b-2 border-slate-800">
+                <tr>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/6">Date</th>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/6">Type</th>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/4">Category</th>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/3">Description</th>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {siteTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-slate-500 font-medium">No transactions recorded for this site.</td>
+                  </tr>
+                ) : (
+                  siteTransactions.map((tx) => (
+                    <tr key={tx.id}>
+                      <td className="py-3 text-slate-600 font-medium">{tx.date}</td>
+                      <td className="py-3">
+                        <span className={`text-xs font-bold uppercase tracking-wider ${tx.type === 'Income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className="py-3 text-slate-700">{tx.category}</td>
+                      <td className="py-3 text-slate-800">{tx.description}</td>
+                      <td className={`py-3 text-right font-bold ${tx.type === 'Income' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        {tx.type === 'Income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+
+            <div className="mt-16 pt-8 border-t border-slate-200">
+              <p className="text-xs text-slate-400 italic text-center">This site ledger contains auto-generated labor costs from daily EOD processes as well as manually logged site transactions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= ADD / EDIT SITE =================
   if (isAdding || editingSite) {
     return (
       <div className="space-y-6 max-w-4xl mx-auto">
@@ -140,6 +273,7 @@ export default function Sites() {
     );
   }
 
+  // ================= DEFAULT SITES LIST =================
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -211,12 +345,15 @@ export default function Sites() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors">
+                      <button 
+                        onClick={() => setViewingSite(site)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors px-3 py-1.5 rounded-md border border-blue-200 hover:bg-blue-50"
+                      >
                         View Logs
                       </button>
                       <button 
                         onClick={() => setEditingSite(site)}
-                        className="text-slate-400 hover:text-slate-600 transition-colors"
+                        className="text-slate-400 hover:text-slate-600 transition-colors px-3 py-1.5"
                       >
                         Edit
                       </button>

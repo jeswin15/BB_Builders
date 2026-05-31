@@ -3,11 +3,13 @@ import { Calendar as CalendarIcon, CheckCircle, XCircle, Clock, AlertCircle, Map
 import { useWorkers } from '../store/useWorkers';
 import { useSites } from '../store/useSites';
 import { useAuth } from '../store/useAuth';
+import { useFinance } from '../store/useFinance';
 
 export default function Attendance() {
   const { workers, updateWorker } = useWorkers();
   const { sites } = useSites();
   const { user } = useAuth();
+  const { addTransaction } = useFinance();
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -58,6 +60,8 @@ export default function Attendance() {
   };
 
   const handleSaveChanges = (isEOD = false, isEdit = false) => {
+    const siteLaborCosts: Record<string, number> = {};
+
     records.forEach(record => {
       const currentWorker = workers.find(w => w.id === record.id);
       if (!currentWorker) return;
@@ -67,13 +71,19 @@ export default function Attendance() {
         status: record.status === 'Absent' ? 'On Leave' : 'Active'
       };
 
+      const calculatedWage = calculateWage(record);
+
       if (isEOD) {
         // Standard Checkout: Log Salary and Add to History
-        updatePayload.balance = (currentWorker.balance || 0) + calculateWage(record);
+        updatePayload.balance = (currentWorker.balance || 0) + calculatedWage;
         updatePayload.attendance = [
             ...(currentWorker.attendance || []), 
             { date: date, status: record.status }
         ];
+
+        if (record.site && record.site !== 'Unassigned' && calculatedWage > 0) {
+          siteLaborCosts[record.site] = (siteLaborCosts[record.site] || 0) + calculatedWage;
+        }
       } else if (isEdit) {
         // Admin Historical Override: Recalculate difference and update History
         const oldRecord = currentWorker.attendance?.find(a => a.date === date);
@@ -95,6 +105,18 @@ export default function Attendance() {
     });
     
     if (isEOD) {
+      Object.entries(siteLaborCosts).forEach(([siteName, cost]) => {
+        addTransaction({
+          id: `TRX-${Date.now().toString().slice(-5)}-${Math.floor(Math.random()*1000)}`,
+          date: date,
+          type: 'Expense',
+          category: 'Payroll',
+          description: `Daily Labor Cost (EOD Checkout)`,
+          amount: cost,
+          site: siteName
+        } as any);
+      });
+
       alert('End of day processed! Worker histories locked and daily salaries added to their accounts.');
       setIsUnlocked(false);
     } else if (isEdit) {

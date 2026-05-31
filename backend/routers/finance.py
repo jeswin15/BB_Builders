@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from database import get_db
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
@@ -12,6 +12,7 @@ class TransactionModel(BaseModel):
     category: str
     description: str
     amount: float
+    site: Optional[str] = None
 
 @router.get("/transactions", response_model=List[TransactionModel])
 async def get_transactions(db=Depends(get_db)):

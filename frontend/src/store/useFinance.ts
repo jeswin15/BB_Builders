@@ -8,6 +8,7 @@ export interface Transaction {
   category: 'Payroll' | 'Material' | 'Client Payment' | 'Other' | string;
   description: string;
   amount: number;
+  site?: string;
 }
 
 interface FinanceState {
