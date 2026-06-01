@@ -9,7 +9,7 @@ class MongoDBClient:
     def connect(self):
         try:
             print(f"Connecting to MongoDB at {settings.MONGODB_URI.split('@')[-1]}...")
-            self.client = AsyncIOMotorClient(settings.MONGODB_URI)
+            self.client = AsyncIOMotorClient(settings.MONGODB_URI, tlsAllowInvalidCertificates=True)
             self.db = self.client[settings.DATABASE_NAME]
             print(f"Connected to MongoDB Atlas: {settings.DATABASE_NAME}")
         except Exception as e:
