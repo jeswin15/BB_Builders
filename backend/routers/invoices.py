@@ -18,7 +18,7 @@ class InvoiceModel(BaseModel):
     totalGst: float
     total: float
 
-@router.get("/", response_model=List[InvoiceModel])
+@router.get("", response_model=List[InvoiceModel])
 async def get_invoices(db=Depends(get_db)):
     cursor = db["invoices"].find()
     invoices = await cursor.to_list(length=1000)
@@ -26,7 +26,7 @@ async def get_invoices(db=Depends(get_db)):
         i.pop('_id', None)
     return invoices
 
-@router.post("/", response_model=InvoiceModel)
+@router.post("", response_model=InvoiceModel)
 async def create_invoice(invoice: InvoiceModel, db=Depends(get_db)):
     await db["invoices"].insert_one(invoice.model_dump())
     return invoice

@@ -15,7 +15,7 @@ class MaterialModel(BaseModel):
     minStock: int
     location: str
 
-@router.get("/", response_model=List[MaterialModel])
+@router.get("", response_model=List[MaterialModel])
 async def get_materials(db=Depends(get_db)):
     cursor = db["materials"].find()
     materials = await cursor.to_list(length=1000)
@@ -23,7 +23,7 @@ async def get_materials(db=Depends(get_db)):
         m.pop('_id', None)
     return materials
 
-@router.post("/", response_model=MaterialModel)
+@router.post("", response_model=MaterialModel)
 async def create_material(material: MaterialModel, db=Depends(get_db)):
     await db["materials"].insert_one(material.model_dump())
     return material

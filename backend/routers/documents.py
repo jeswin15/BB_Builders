@@ -14,7 +14,7 @@ class DocumentModel(BaseModel):
     date: str
     size: str
 
-@router.get("/", response_model=List[DocumentModel])
+@router.get("", response_model=List[DocumentModel])
 async def get_documents(db=Depends(get_db)):
     cursor = db["documents"].find()
     docs = await cursor.to_list(length=1000)
@@ -22,10 +22,10 @@ async def get_documents(db=Depends(get_db)):
         d.pop('_id', None)
     return docs
 
-@router.post("/", response_model=DocumentModel)
-async def create_document(doc: DocumentModel, db=Depends(get_db)):
-    await db["documents"].insert_one(doc.model_dump())
-    return doc
+@router.post("", response_model=DocumentModel)
+async def create_document(document: DocumentModel, db=Depends(get_db)):
+    await db["documents"].insert_one(document.model_dump())
+    return document
 
 @router.delete("/{doc_id}")
 async def delete_document(doc_id: str, db=Depends(get_db)):

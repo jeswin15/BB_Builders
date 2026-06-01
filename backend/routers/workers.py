@@ -22,7 +22,7 @@ class WorkerModel(BaseModel):
     balance: float
     attendance: List[WorkerAttendance]
 
-@router.get("/", response_model=List[WorkerModel])
+@router.get("", response_model=List[WorkerModel])
 async def get_workers(db=Depends(get_db)):
     cursor = db["workers"].find()
     workers = await cursor.to_list(length=1000)
@@ -30,7 +30,7 @@ async def get_workers(db=Depends(get_db)):
         w.pop('_id', None)
     return workers
 
-@router.post("/", response_model=WorkerModel)
+@router.post("", response_model=WorkerModel)
 async def create_worker(worker: WorkerModel, db=Depends(get_db)):
     await db["workers"].insert_one(worker.model_dump())
     return worker

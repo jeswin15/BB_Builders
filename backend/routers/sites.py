@@ -14,7 +14,7 @@ class SiteModel(BaseModel):
     workers: int
     status: str
 
-@router.get("/", response_model=List[SiteModel])
+@router.get("", response_model=List[SiteModel])
 async def get_sites(db=Depends(get_db)):
     cursor = db["sites"].find()
     sites = await cursor.to_list(length=1000)
@@ -22,7 +22,7 @@ async def get_sites(db=Depends(get_db)):
         s.pop('_id', None)
     return sites
 
-@router.post("/", response_model=SiteModel)
+@router.post("", response_model=SiteModel)
 async def create_site(site: SiteModel, db=Depends(get_db)):
     await db["sites"].insert_one(site.model_dump())
     return site

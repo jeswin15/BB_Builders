@@ -13,7 +13,7 @@ class ClientModel(BaseModel):
     email: str
     value: str
 
-@router.get("/", response_model=List[ClientModel])
+@router.get("", response_model=List[ClientModel])
 async def get_clients(db=Depends(get_db)):
     cursor = db["clients"].find()
     clients = await cursor.to_list(length=1000)
@@ -21,7 +21,7 @@ async def get_clients(db=Depends(get_db)):
         c.pop('_id', None)
     return clients
 
-@router.post("/", response_model=ClientModel)
+@router.post("", response_model=ClientModel)
 async def create_client(client: ClientModel, db=Depends(get_db)):
     await db["clients"].insert_one(client.model_dump())
     return client

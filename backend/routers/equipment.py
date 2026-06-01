@@ -14,7 +14,7 @@ class EquipmentModel(BaseModel):
     status: str
     site: str
 
-@router.get("/", response_model=List[EquipmentModel])
+@router.get("", response_model=List[EquipmentModel])
 async def get_equipment(db=Depends(get_db)):
     cursor = db["equipment"].find()
     equipment = await cursor.to_list(length=1000)
@@ -22,7 +22,7 @@ async def get_equipment(db=Depends(get_db)):
         e.pop('_id', None)
     return equipment
 
-@router.post("/", response_model=EquipmentModel)
+@router.post("", response_model=EquipmentModel)
 async def create_equipment(item: EquipmentModel, db=Depends(get_db)):
     await db["equipment"].insert_one(item.model_dump())
     return item

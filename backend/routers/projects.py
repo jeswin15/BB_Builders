@@ -14,7 +14,7 @@ class ProjectModel(BaseModel):
     location: str
     status: str
 
-@router.get("/", response_model=List[ProjectModel])
+@router.get("", response_model=List[ProjectModel])
 async def get_projects(db=Depends(get_db)):
     cursor = db["projects"].find()
     projects = await cursor.to_list(length=1000)
@@ -23,7 +23,7 @@ async def get_projects(db=Depends(get_db)):
         p.pop('_id', None)
     return projects
 
-@router.post("/", response_model=ProjectModel)
+@router.post("", response_model=ProjectModel)
 async def create_project(project: ProjectModel, db=Depends(get_db)):
     await db["projects"].insert_one(project.model_dump())
     return project
