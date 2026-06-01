@@ -9,6 +9,9 @@ export interface Equipment {
   owned: boolean;
   status: string;
   site: string;
+  maintenanceSchedule?: string;
+  fuelCost?: number;
+  operator?: string;
 }
 
 interface EquipmentState {

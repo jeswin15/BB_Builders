@@ -9,12 +9,13 @@ export interface Document {
   uploadedBy: string;
   date: string;
   size: string;
+  fileUrl?: string;
 }
 
 interface DocumentsState {
   documents: Document[];
   fetchDocuments: () => Promise<void>;
-  addDocument: (doc: Document) => Promise<void>;
+  addDocument: (formData: FormData) => Promise<void>;
   deleteDocument: (id: string) => Promise<void>;
 }
 
@@ -28,12 +29,20 @@ export const useDocuments = create<DocumentsState>((set) => ({
       console.error('Failed to fetch documents:', error);
     }
   },
-  addDocument: async (doc) => {
+  addDocument: async (formData) => {
     try {
-      const response = await api.post('/documents', doc);
-      set((state) => ({ documents: [...state.documents, response.data] }));
+      const response = await fetch('http://localhost:8000/api/documents', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      set((state) => ({ documents: [...state.documents, data] }));
     } catch (error) {
       console.error('Failed to add document:', error);
+      throw error;
     }
   },
   deleteDocument: async (id) => {

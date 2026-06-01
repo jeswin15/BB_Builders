@@ -78,7 +78,7 @@ export default function Attendance() {
         updatePayload.balance = (currentWorker.balance || 0) + calculatedWage;
         updatePayload.attendance = [
             ...(currentWorker.attendance || []), 
-            { date: date, status: record.status }
+            { date: date, status: record.status, paid: false, wage: calculatedWage, site: record.site }
         ];
 
         if (record.site && record.site !== 'Unassigned' && calculatedWage > 0) {
@@ -93,11 +93,11 @@ export default function Attendance() {
            const diff = newWage - oldWage;
            
            updatePayload.balance = (currentWorker.balance || 0) + diff;
-           updatePayload.attendance = currentWorker.attendance?.map(a => a.date === date ? { date, status: record.status } : a);
+           updatePayload.attendance = currentWorker.attendance?.map(a => a.date === date ? { date, status: record.status, paid: a.paid, wage: newWage, site: record.site } : a);
         } else {
            // If somehow they had no record, treat as new
            updatePayload.balance = (currentWorker.balance || 0) + calculateWage(record);
-           updatePayload.attendance = [...(currentWorker.attendance || []), { date: date, status: record.status }];
+           updatePayload.attendance = [...(currentWorker.attendance || []), { date: date, status: record.status, paid: false, wage: calculateWage(record), site: record.site }];
         }
       }
 
@@ -105,18 +105,6 @@ export default function Attendance() {
     });
     
     if (isEOD) {
-      Object.entries(siteLaborCosts).forEach(([siteName, cost]) => {
-        addTransaction({
-          id: `TRX-${Date.now().toString().slice(-5)}-${Math.floor(Math.random()*1000)}`,
-          date: date,
-          type: 'Expense',
-          category: 'Payroll',
-          description: `Daily Labor Cost (EOD Checkout)`,
-          amount: cost,
-          site: siteName
-        } as any);
-      });
-
       alert('End of day processed! Worker histories locked and daily salaries added to their accounts.');
       setIsUnlocked(false);
     } else if (isEdit) {

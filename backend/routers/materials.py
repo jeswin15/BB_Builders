@@ -14,6 +14,10 @@ class MaterialModel(BaseModel):
     unit: str
     minStock: int
     location: str
+    supplier: str = ""
+    price: float = 0.0
+    lastRestocked: str = ""
+    history: list = []
 
 @router.get("", response_model=List[MaterialModel])
 async def get_materials(db=Depends(get_db)):

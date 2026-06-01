@@ -12,7 +12,13 @@ export interface Worker {
   site: string;
   advances: number;
   balance: number;
-  attendance: { date: string; status: 'Present' | 'Absent' | 'Half-day' }[];
+  attendance?: { 
+    date: string; 
+    status: string;
+    paid?: boolean;
+    wage?: number;
+    site?: string;
+  }[];
 }
 
 interface WorkersState {

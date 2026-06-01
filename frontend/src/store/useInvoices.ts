@@ -27,6 +27,7 @@ interface InvoicesState {
   invoices: SavedInvoice[];
   fetchInvoices: () => Promise<void>;
   saveInvoice: (invoice: SavedInvoice) => Promise<void>;
+  deleteInvoice: (id: string) => Promise<void>;
 }
 
 export const useInvoices = create<InvoicesState>((set) => ({
@@ -45,6 +46,14 @@ export const useInvoices = create<InvoicesState>((set) => ({
       set((state) => ({ invoices: [response.data, ...state.invoices] }));
     } catch (error) {
       console.error('Failed to save invoice:', error);
+    }
+  },
+  deleteInvoice: async (id) => {
+    try {
+      await api.delete(`/invoices/${id}`);
+      set((state) => ({ invoices: state.invoices.filter((inv) => inv.id !== id) }));
+    } catch (error) {
+      console.error('Failed to delete invoice:', error);
     }
   },
 }));

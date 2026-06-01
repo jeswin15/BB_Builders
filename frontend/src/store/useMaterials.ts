@@ -10,6 +10,10 @@ export interface Material {
   unit: string;
   minStock: number;
   location: string;
+  supplier?: string;
+  price?: number;
+  lastRestocked?: string;
+  history?: { date: string; type: 'In' | 'Out'; quantity: number; site?: string; description?: string }[];
 }
 
 interface MaterialsState {

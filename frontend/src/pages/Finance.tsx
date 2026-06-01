@@ -56,25 +56,72 @@ export default function Finance() {
     }
 
     if (window.confirm(`Process payroll of ₹${netPayable.toLocaleString()} for ${worker.name}?`)) {
-      // 1. Log Transaction
-      if (netPayable > 0) {
-        addTransaction({
-          id: `TRX-${Date.now().toString().slice(-5)}`,
-          date: new Date().toISOString().split('T')[0],
-          type: 'Expense',
-          category: 'Payroll',
-          description: `Payroll processed for ${worker.name} (${worker.id})`,
-          amount: netPayable
+      
+      // Calculate Site-Specific Wages from Unpaid Attendance
+      const siteWages: Record<string, number> = {};
+      let totalUnpaidCalculated = 0;
+      
+      if (worker.attendance) {
+        worker.attendance.forEach((record: any) => {
+          if (!record.paid && record.wage && record.wage > 0) {
+            const site = record.site && record.site !== 'Unassigned' ? record.site : 'General';
+            siteWages[site] = (siteWages[site] || 0) + record.wage;
+            totalUnpaidCalculated += record.wage;
+          }
         });
       }
 
-      // 2. Reset Worker Balance
-      updateWorker(worker.id, {
-        balance: 0,
-        advances: 0
+      // If totalUnpaidCalculated doesn't exactly match the worker's balance (e.g. historical manual edits), 
+      // we log the difference as a General Payroll Expense.
+      const difference = (worker.balance || 0) - totalUnpaidCalculated;
+      if (difference > 0) {
+         siteWages['General'] = (siteWages['General'] || 0) + difference;
+      } else if (difference < 0 && siteWages['General']) {
+         // Prevent negative general expense if possible, just an edge case catch
+         siteWages['General'] = Math.max(0, siteWages['General'] + difference);
+      }
+
+      // 1. Advance Recovery
+      if (worker.advances && worker.advances > 0) {
+        addTransaction({
+          id: `TRX-${Date.now().toString().slice(-5)}-ADV`,
+          date: new Date().toISOString().split('T')[0],
+          type: 'Income',
+          category: 'Other',
+          description: `Advance Recovery from Payroll for ${worker.name} (${worker.id})`,
+          amount: worker.advances
+        });
+      }
+
+      // 2. Log Site-Specific Expenses
+      Object.entries(siteWages).forEach(([site, amount], idx) => {
+        if (amount > 0) {
+          addTransaction({
+            id: `TRX-${Date.now().toString().slice(-5)}-PAY${idx}`,
+            date: new Date().toISOString().split('T')[0],
+            type: 'Expense',
+            category: 'Payroll',
+            description: `Payroll processed for ${worker.name} (${worker.id})`,
+            amount: amount,
+            site: site === 'General' ? undefined : site
+          });
+        }
       });
 
-      alert(`Payroll processed successfully for ${worker.name}!`);
+      // 3. Mark all attendance as paid
+      const updatedAttendance = worker.attendance?.map((record: any) => ({
+        ...record,
+        paid: true
+      }));
+
+      // 4. Reset Worker Balance
+      updateWorker(worker.id, {
+        balance: 0,
+        advances: 0,
+        attendance: updatedAttendance
+      });
+
+      alert(`Payroll processed successfully for ${worker.name}! Expenses have been properly allocated to sites.`);
     }
   };
 

@@ -10,7 +10,7 @@ import logoImg from '../assets/BB Builder Logo.png';
 export default function InvoiceGenerator() {
   const { projects } = useProjects();
   const { workers } = useWorkers();
-  const { invoices, saveInvoice } = useInvoices();
+  const { invoices, saveInvoice, deleteInvoice } = useInvoices();
 
   const [activeTab, setActiveTab] = useState<'create' | 'history' | 'view'>('create');
   const [viewingInvoice, setViewingInvoice] = useState<SavedInvoice | null>(null);
@@ -137,12 +137,22 @@ export default function InvoiceGenerator() {
                     <td className="px-6 py-4 text-slate-600">{inv.invoiceType}</td>
                     <td className="px-6 py-4 font-medium text-slate-800">{inv.targetName}</td>
                     <td className="px-6 py-4 text-right font-bold text-slate-800">{formatCurrency(inv.total)}</td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex justify-end gap-3">
                       <button 
                         onClick={() => handleViewInvoice(inv)}
                         className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                       >
                         View / Print
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (window.confirm('Are you sure you want to delete this document?')) {
+                            deleteInvoice(inv.id);
+                          }
+                        }}
+                        className="text-sm font-medium text-rose-600 hover:text-rose-800 transition-colors"
+                      >
+                        Delete
                       </button>
                     </td>
                   </tr>
@@ -293,24 +303,24 @@ export default function InvoiceGenerator() {
         <div className="flex gap-3 w-full sm:w-auto">
           <button 
             onClick={() => setActiveTab('history')}
-            className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 text-sm rounded-lg font-medium transition-colors whitespace-nowrap"
           >
-            <History size={18} />
+            <History size={16} />
             <span>History</span>
           </button>
           <button 
             onClick={handleSaveInvoice}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-sm rounded-lg font-medium transition-colors whitespace-nowrap"
           >
-            <Save size={18} />
+            <Save size={16} />
             <span>Generate & Save</span>
           </button>
-          <button onClick={handlePrint} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors">
-            <Printer size={18} />
+          <button onClick={handlePrint} className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 text-sm rounded-lg font-medium transition-colors whitespace-nowrap">
+            <Printer size={16} />
             <span>Print Now</span>
           </button>
-          <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
-            <Download size={18} />
+          <button onClick={handlePrint} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 text-sm rounded-lg font-medium transition-colors whitespace-nowrap">
+            <Download size={16} />
             <span>Save as PDF</span>
           </button>
         </div>

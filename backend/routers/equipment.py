@@ -13,6 +13,9 @@ class EquipmentModel(BaseModel):
     owned: bool
     status: str
     site: str
+    maintenanceSchedule: str = ""
+    fuelCost: float = 0.0
+    operator: str = ""
 
 @router.get("", response_model=List[EquipmentModel])
 async def get_equipment(db=Depends(get_db)):

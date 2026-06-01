@@ -34,6 +34,7 @@ export const useProjects = create<ProjectsState>((set) => ({
       set((state) => ({ projects: [...state.projects, response.data] }));
     } catch (error) {
       console.error('Failed to add project:', error);
+      alert('Failed to connect to Database. Please check your MongoDB Atlas IP Whitelist (Network Access) as your IP may have changed.');
     }
   },
   updateProject: async (id, updatedData) => {

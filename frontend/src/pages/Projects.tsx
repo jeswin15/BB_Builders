@@ -266,67 +266,79 @@ export default function Projects() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {projects.map((project) => (
-          <div key={project.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                  project.status === 'Approved' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
+      {projects.length === 0 ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-12 text-center flex flex-col items-center">
+          <Briefcase size={48} className="text-slate-300 mb-4" />
+          <h3 className="text-lg font-semibold text-slate-800">No Projects Found</h3>
+          <p className="text-slate-500 mt-2 max-w-md mx-auto">
+            You haven't successfully added any projects yet, or the database connection is failing. 
+            <br/><br/>
+            <strong>Note:</strong> If you are adding projects but they disappear, your MongoDB Atlas cluster is blocking your IP address. Please go to MongoDB Atlas Network Access and whitelist your current IP address.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {projects.map((project) => (
+            <div key={project.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col hover:shadow-md transition-shadow">
+              <div className="flex justify-between items-start mb-4">
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    project.status === 'Approved' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    <Briefcase size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-slate-800">{project.name}</h3>
+                    <p className="text-sm text-slate-500">{project.client}</p>
+                  </div>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
+                  project.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : 
+                  project.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 
+                  'bg-slate-100 text-slate-700'
                 }`}>
-                  <Briefcase size={24} />
+                  {project.status === 'Approved' ? <CheckCircle size={14} /> : <Clock size={14} />}
+                  {project.status}
+                </span>
+              </div>
+  
+              <div className="space-y-3 mb-6 flex-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500 flex items-center gap-2"><TrendingUp size={16}/> Budget</span>
+                  <span className="font-semibold text-slate-800">{formatCurrency(project.budget)}</span>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-800">{project.name}</h3>
-                  <p className="text-sm text-slate-500">{project.client}</p>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500 flex items-center gap-2"><Calendar size={16}/> Timeline</span>
+                  <span className="font-semibold text-slate-800">{project.timeline}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500 flex items-center gap-2"><Search size={16}/> Location</span>
+                  <span className="font-semibold text-slate-800">{project.location}</span>
                 </div>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${
-                project.status === 'Approved' ? 'bg-emerald-100 text-emerald-700' : 
-                project.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 
-                'bg-slate-100 text-slate-700'
-              }`}>
-                {project.status === 'Approved' ? <CheckCircle size={14} /> : <Clock size={14} />}
-                {project.status}
-              </span>
-            </div>
-
-            <div className="space-y-3 mb-6 flex-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 flex items-center gap-2"><TrendingUp size={16}/> Budget</span>
-                <span className="font-semibold text-slate-800">{formatCurrency(project.budget)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 flex items-center gap-2"><Calendar size={16}/> Timeline</span>
-                <span className="font-semibold text-slate-800">{project.timeline}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-slate-500 flex items-center gap-2"><Search size={16}/> Location</span>
-                <span className="font-semibold text-slate-800">{project.location}</span>
+  
+              <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                <span className="text-xs font-medium text-slate-400">{project.id}</span>
+                {project.status === 'Pending' ? (
+                  <button 
+                    onClick={() => handleApprove(project)}
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200"
+                  >
+                    <CheckCircle size={16} /> Approve & Move to Sites
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setEditingProject(project)}
+                    className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    Manage Project →
+                  </button>
+                )}
               </div>
             </div>
-
-            <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
-              <span className="text-xs font-medium text-slate-400">{project.id}</span>
-              {project.status === 'Pending' ? (
-                <button 
-                  onClick={() => handleApprove(project)}
-                  className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200"
-                >
-                  <CheckCircle size={16} /> Approve & Move to Sites
-                </button>
-              ) : (
-                <button 
-                  onClick={() => setEditingProject(project)}
-                  className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                >
-                  Manage Project →
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

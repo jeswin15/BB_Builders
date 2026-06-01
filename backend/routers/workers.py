@@ -8,6 +8,9 @@ router = APIRouter(prefix="/api/workers", tags=["workers"])
 class WorkerAttendance(BaseModel):
     date: str
     status: str
+    paid: bool = False
+    wage: float = 0.0
+    site: str = ""
 
 class WorkerModel(BaseModel):
     id: str
