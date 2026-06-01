@@ -19,6 +19,8 @@ interface DocumentsState {
   deleteDocument: (id: string) => Promise<void>;
 }
 
+import { baseURL } from '../api/client';
+
 export const useDocuments = create<DocumentsState>((set) => ({
   documents: [],
   fetchDocuments: async () => {
@@ -31,7 +33,7 @@ export const useDocuments = create<DocumentsState>((set) => ({
   },
   addDocument: async (formData) => {
     try {
-      const response = await fetch('http://localhost:8000/api/documents', {
+      const response = await fetch(`${baseURL}/documents`, {
         method: 'POST',
         body: formData,
       });

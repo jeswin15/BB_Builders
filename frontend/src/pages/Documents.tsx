@@ -3,6 +3,7 @@ import { Upload, FileText, Download, File, Trash2, Search, Filter, X, Save } fro
 import { useDocuments } from '../store/useDocuments';
 import { useProjects } from '../store/useProjects';
 import { useAuth } from '../store/useAuth';
+import { baseURL } from '../api/client';
 
 export default function Documents() {
   const { documents, addDocument, deleteDocument } = useDocuments();
@@ -79,7 +80,8 @@ export default function Documents() {
       alert("File URL not found.");
       return;
     }
-    window.open(`http://localhost:8000${fileUrl}`, '_blank');
+    const origin = baseURL.replace('/api', '');
+    window.open(`${origin}${fileUrl}`, '_blank');
   };
 
   const filteredDocs = documents.filter(doc => {

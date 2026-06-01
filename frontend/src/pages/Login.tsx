@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/useAuth';
 import logoImg from '../assets/BB Builder Logo.png';
+import { baseURL } from '../api/client';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -17,8 +18,7 @@ export default function Login() {
       formData.append('username', email);
       formData.append('password', password);
 
-      const baseUrl = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8000/api');
-      const response = await fetch(`${baseUrl}/auth/token`, {
+      const response = await fetch(`${baseURL}/auth/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
