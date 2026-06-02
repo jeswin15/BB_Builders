@@ -298,7 +298,7 @@ export default function InvoiceGenerator() {
               {isViewPayslip && (
                 <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
               )}
-              <p className="text-xs text-slate-400 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
+              <p className="text-xs text-slate-400 italic text-center">Thank you.</p>
             </div>
           </div>
         </div>
@@ -567,7 +567,7 @@ export default function InvoiceGenerator() {
             {isPayslip && (
               <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
             )}
-            <p className="text-xs text-slate-400 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
+            <p className="text-xs text-slate-400 italic text-center">Thank you.</p>
           </div>
 
         </div>
