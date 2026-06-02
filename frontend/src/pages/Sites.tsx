@@ -249,6 +249,14 @@ export default function Sites() {
                     ))
                   )}
                 </tbody>
+                {siteWorkersStats.length > 0 && (
+                  <tfoot className="border-t-2 border-slate-800 bg-slate-50">
+                    <tr>
+                      <td colSpan={3} className="py-4 pr-6 text-right font-bold text-slate-800 uppercase tracking-wider text-sm">Total Labor Cost for Site:</td>
+                      <td className="py-4 text-right font-black text-emerald-700 text-lg">{formatCurrency(siteWorkersStats.reduce((sum, w) => sum + w.totalWages, 0))}</td>
+                    </tr>
+                  </tfoot>
+                )}
               </table>
             </div>
 
