@@ -53,15 +53,24 @@ function App() {
   const fetchDocuments = useDocuments(state => state.fetchDocuments);
 
   useEffect(() => {
-    fetchProjects();
-    fetchWorkers();
-    fetchInvoices();
-    fetchTransactions();
-    fetchClients();
-    fetchSites();
-    fetchMaterials();
-    fetchEquipment();
-    fetchDocuments();
+    const loadData = () => {
+      fetchProjects();
+      fetchWorkers();
+      fetchInvoices();
+      fetchTransactions();
+      fetchClients();
+      fetchSites();
+      fetchMaterials();
+      fetchEquipment();
+      fetchDocuments();
+    };
+
+    // Initial load
+    loadData();
+
+    // Auto-refresh every 10 seconds to keep everything synced across devices
+    const intervalId = setInterval(loadData, 10000);
+    return () => clearInterval(intervalId);
   }, [fetchProjects, fetchWorkers, fetchInvoices, fetchTransactions, fetchClients, fetchSites, fetchMaterials, fetchEquipment, fetchDocuments]);
 
   return (
