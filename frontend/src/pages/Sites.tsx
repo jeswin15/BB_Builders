@@ -102,6 +102,24 @@ export default function Sites() {
     const totalIncome = siteTransactions.filter(t => t.type === 'Income').reduce((sum, t) => sum + t.amount, 0);
     const balance = totalIncome - totalExpenses;
 
+    const siteWorkersStats = workers
+      .map(w => {
+        const siteAttendance = w.attendance?.filter(a => a.site === viewingSite.name && (a.status === 'Present' || a.status === 'Half-day')) || [];
+        if (siteAttendance.length === 0) return null;
+        
+        const totalDays = siteAttendance.reduce((sum, a) => sum + (a.status === 'Half-day' ? 0.5 : 1), 0);
+        const totalWages = siteAttendance.reduce((sum, a) => sum + (a.wage || 0), 0);
+        
+        return {
+          id: w.id,
+          name: w.name,
+          skill: w.skill,
+          totalDays,
+          totalWages
+        };
+      })
+      .filter(Boolean) as { id: string, name: string, skill: string, totalDays: number, totalWages: number }[];
+
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 print:hidden">
@@ -200,6 +218,39 @@ export default function Sites() {
                 )}
               </tbody>
             </table>
+
+            {/* Worker Labor History Table */}
+            <div className="mt-12">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Labor Cost Breakdown</h3>
+              <table className="w-full text-left mb-8">
+                <thead className="border-b-2 border-slate-800">
+                  <tr>
+                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/3">Worker Name</th>
+                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/4">Trade / Skill</th>
+                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider w-1/4 text-center">Days Worked</th>
+                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Total Earned</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {siteWorkersStats.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-slate-500 font-medium">No worker attendance logged for this site yet.</td>
+                    </tr>
+                  ) : (
+                    siteWorkersStats.map((wStats) => (
+                      <tr key={wStats.id}>
+                        <td className="py-3 text-slate-800 font-bold">{wStats.name}</td>
+                        <td className="py-3 text-slate-600 font-medium">{wStats.skill}</td>
+                        <td className="py-3 text-slate-800 text-center font-semibold">
+                          <span className="bg-slate-100 px-3 py-1 rounded-md">{wStats.totalDays}</span>
+                        </td>
+                        <td className="py-3 text-right font-bold text-emerald-600">{formatCurrency(wStats.totalWages)}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             <div className="mt-16 pt-8 border-t border-slate-200">
               <p className="text-xs text-slate-400 italic text-center">This site ledger contains auto-generated labor costs from daily EOD processes as well as manually logged site transactions.</p>
