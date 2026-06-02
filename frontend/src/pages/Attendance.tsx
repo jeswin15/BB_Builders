@@ -130,9 +130,14 @@ export default function Attendance() {
     return istHour >= 17;
   };
 
-  // Only check time if we are looking at TODAY. Past days can't be EOD processed again.
   const isToday = date === new Date().toISOString().split('T')[0];
-  const canProcess = isPast5PM() && isToday && !isProcessedForDate;
+  const isPastDay = date < new Date().toISOString().split('T')[0];
+  const isAdmin = user?.role === 'Admin' || user?.role === 'Super Admin';
+  
+  const canProcess = (!isProcessedForDate) && (
+    (isToday && isPast5PM()) || 
+    (isPastDay && isAdmin)
+  );
 
   return (
     <div className="space-y-6">
@@ -152,7 +157,7 @@ export default function Attendance() {
             />
           </div>
           
-          {!isProcessed && !isUnlocked && isToday && (
+          {!isProcessed && !isUnlocked && (isToday || (isPastDay && isAdmin)) && (
             <button 
               onClick={() => handleSaveChanges(false, false)}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold transition-colors shadow-sm"
@@ -288,7 +293,7 @@ export default function Attendance() {
         </div>
         
         {/* End of Day Processor Button */}
-        {!isProcessed && isToday && (
+        {!isProcessed && (isToday || (isPastDay && isAdmin)) && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
             <button 
               onClick={() => handleSaveChanges(true, false)}
@@ -300,7 +305,7 @@ export default function Attendance() {
               }`}
             >
               <Clock size={18} />
-              Process 5:00 PM Checkout & Log Salary
+              {isPastDay ? 'Process Historical Attendance & Log Salary' : 'Process 5:00 PM Checkout & Log Salary'}
             </button>
           </div>
         )}
