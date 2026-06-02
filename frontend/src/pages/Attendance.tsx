@@ -29,7 +29,7 @@ export default function Attendance() {
           id: w.id,
           name: w.name,
           skill: w.skill,
-          site: w.site,
+          site: pastRecord?.site || w.site,
           baseWage: w.dailyRate,
           status: pastRecord ? pastRecord.status : (w.status === 'On Leave' ? 'Absent' : 'Present'),
           overtime: 0
