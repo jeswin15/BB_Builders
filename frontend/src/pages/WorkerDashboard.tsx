@@ -118,6 +118,7 @@ export default function WorkerDashboard() {
   };
 
   const recentLogs = [...(selectedWorker.attendance || [])]
+    .filter(a => a.date && a.date !== 'string')
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10); // Show last 10 logs
 
