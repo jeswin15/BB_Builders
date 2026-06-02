@@ -276,15 +276,10 @@ export default function InvoiceGenerator() {
             </div>
 
             <div className="mt-16 pt-8 border-t border-slate-200">
-              {!isViewPayslip ? (
-                <>
-                  <p className="text-sm font-semibold text-slate-800 mb-2">Bank Details for Transfer:</p>
-                  <p className="text-xs text-slate-600">Bank: HDFC Bank | Account Name: BB Builders Pvt Ltd | A/C No: 50100012345678 | IFSC: HDFC0001234</p>
-                </>
-              ) : (
-                <p className="text-xs text-slate-600">This payslip is a record of your salary distribution for the specified period.</p>
+              {isViewPayslip && (
+                <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
               )}
-              <p className="text-xs text-slate-400 mt-6 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
+              <p className="text-xs text-slate-400 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
             </div>
           </div>
         </div>
@@ -511,15 +506,10 @@ export default function InvoiceGenerator() {
           </div>
 
           <div className="mt-16 pt-8 border-t border-slate-200">
-            {!isPayslip ? (
-              <>
-                <p className="text-sm font-semibold text-slate-800 mb-2">Bank Details for Transfer:</p>
-                <p className="text-xs text-slate-600">Bank: HDFC Bank | Account Name: BB Builders Pvt Ltd | A/C No: 50100012345678 | IFSC: HDFC0001234</p>
-              </>
-            ) : (
-              <p className="text-xs text-slate-600">This payslip is a record of your salary distribution for the specified period.</p>
+            {isPayslip && (
+              <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
             )}
-            <p className="text-xs text-slate-400 mt-6 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
+            <p className="text-xs text-slate-400 italic text-center">Thank you. This is a computer-generated document and does not require a signature.</p>
           </div>
 
         </div>
