@@ -9,11 +9,17 @@ import logoImg from '../assets/BB Builder Logo.png';
 export default function Sites() {
   const { sites, addSite, updateSite } = useSites();
   const { workers } = useWorkers();
-  const { transactions } = useFinance();
+  const { transactions, addTransaction } = useFinance();
   
   const [isAdding, setIsAdding] = useState(false);
   const [editingSite, setEditingSite] = useState<any>(null);
   const [viewingSite, setViewingSite] = useState<any>(null);
+  const [isLoggingExpense, setIsLoggingExpense] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
+    category: 'Material',
+    description: '',
+    amount: ''
+  });
   
   const [newSite, setNewSite] = useState<any>({
     name: '', project: '', location: '', engineers: 0, workers: 0, status: 'Active'
@@ -93,6 +99,24 @@ export default function Sites() {
     }
   };
 
+  const handleLogExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expenseForm.amount || !expenseForm.description) return;
+    
+    await addTransaction({
+      id: Date.now().toString(),
+      date: new Date().toISOString().split('T')[0],
+      type: 'Expense',
+      category: expenseForm.category,
+      description: expenseForm.description,
+      amount: Number(expenseForm.amount),
+      site: viewingSite.name
+    });
+    
+    setIsLoggingExpense(false);
+    setExpenseForm({ category: 'Material', description: '', amount: '' });
+  };
+
   // ================= VIEW SITE LOGS / LEDGER =================
   if (viewingSite) {
     const siteTransactions = transactions.filter(t => t.site === viewingSite.name)
@@ -135,12 +159,79 @@ export default function Sites() {
               <Printer size={18} />
               <span>Print Ledger</span>
             </button>
+            <button onClick={() => setIsLoggingExpense(true)} className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              <Plus size={18} />
+              <span>Log Direct Expense</span>
+            </button>
             <button onClick={downloadCSV} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
               <Download size={18} />
               <span>Download CSV</span>
             </button>
           </div>
         </div>
+
+        {isLoggingExpense && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+              <div className="p-6 border-b border-slate-200">
+                <h2 className="text-xl font-bold text-slate-800">Log Direct Site Expense</h2>
+                <p className="text-sm text-slate-500 mt-1">Record a direct expense for {viewingSite.name}</p>
+              </div>
+              <form onSubmit={handleLogExpense} className="p-6 space-y-4">
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1 block">Category</label>
+                  <select 
+                    value={expenseForm.category}
+                    onChange={(e) => setExpenseForm({...expenseForm, category: e.target.value})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  >
+                    <option value="Material">Material / Supplies</option>
+                    <option value="Transport">Transport / Logistics</option>
+                    <option value="Vendor Payment">Vendor Payment</option>
+                    <option value="Other">Other Expense</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1 block">Description</label>
+                  <input 
+                    type="text"
+                    required
+                    value={expenseForm.description}
+                    onChange={(e) => setExpenseForm({...expenseForm, description: e.target.value})}
+                    placeholder="e.g., Cement bags directly delivered"
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-1 block">Amount (₹)</label>
+                  <input 
+                    type="number"
+                    required
+                    min="1"
+                    value={expenseForm.amount}
+                    onChange={(e) => setExpenseForm({...expenseForm, amount: e.target.value})}
+                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                  />
+                </div>
+                <div className="pt-4 flex justify-end gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setIsLoggingExpense(false)}
+                    className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-6 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors"
+                  >
+                    Save Expense
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Printable Ledger Area */}
         <div className="bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden max-w-4xl mx-auto print:shadow-none print:border-none print:w-full">
