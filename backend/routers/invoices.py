@@ -13,6 +13,9 @@ class InvoiceModel(BaseModel):
     targetName: str
     targetRoleOrProject: str
     targetLocationOrSite: str
+    fromName: str = "BB Builders"
+    fromAddress: str = "123 Construction Avenue\nTech Park, Bangalore 560001"
+    fromGSTIN: str = "29ABCDE1234F1Z5"
     items: List[Any]
     subtotal: float
     totalGst: float

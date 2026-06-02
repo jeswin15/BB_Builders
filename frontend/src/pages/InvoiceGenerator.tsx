@@ -22,6 +22,16 @@ export default function InvoiceGenerator() {
     { id: 1, description: 'Foundation Phase Completion', qty: 1, rate: 1200000, gstPercent: 18 },
   ]);
 
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [fromName, setFromName] = useState('BB Builders ERP');
+  const [fromAddress, setFromAddress] = useState('123 Construction Avenue\nTech Park, Bangalore 560001');
+  const [fromGSTIN, setFromGSTIN] = useState('29ABCDE1234F1Z5');
+
+  React.useEffect(() => {
+    setInvoiceNumber(`INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`);
+  }, []);
+
   const isPayslip = invoiceType === 'Worker Payslip';
 
   const handlePrint = () => {
@@ -68,16 +78,19 @@ export default function InvoiceGenerator() {
       return;
     }
 
-    const newId = `${isPayslip ? 'PAY' : 'INV'}-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+    const newId = invoiceNumber || `${isPayslip ? 'PAY' : 'INV'}-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
     
     const invoiceToSave: SavedInvoice = {
       id: newId,
       invoiceType,
-      date: new Date().toISOString().split('T')[0],
+      date: invoiceDate,
       targetId: selectedEntity,
       targetName: isPayslip ? (targetWorker?.name || '') : (targetProject?.client || ''),
       targetRoleOrProject: isPayslip ? (targetWorker?.skill || '') : (targetProject?.name || ''),
       targetLocationOrSite: isPayslip ? (targetWorker?.site || '') : (targetProject?.location || ''),
+      fromName,
+      fromAddress,
+      fromGSTIN,
       items: [...items],
       subtotal,
       totalGst,
@@ -197,7 +210,7 @@ export default function InvoiceGenerator() {
               <div className="flex items-center gap-3">
                 <img src={logoImg} alt="BB Builders Logo" className="h-20 object-contain" />
                 <div>
-                  <p className="text-sm text-slate-500 font-medium">Enterprise Construction & Management</p>
+                  <p className="text-sm text-slate-500 font-medium">BB Builders</p>
                 </div>
               </div>
               <div className="text-right">
@@ -210,10 +223,9 @@ export default function InvoiceGenerator() {
             <div className="flex justify-between mt-8 mb-12">
               <div>
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">From</h3>
-                <p className="font-bold text-slate-800">BB Builders ERP</p>
-                <p className="text-sm text-slate-600 mt-1">123 Construction Avenue</p>
-                <p className="text-sm text-slate-600">Tech Park, Bangalore 560001</p>
-                <p className="text-sm text-slate-600">GSTIN: 29ABCDE1234F1Z5</p>
+                <p className="font-bold text-slate-800">{viewingInvoice.fromName || 'BB Builders ERP'}</p>
+                <p className="text-sm text-slate-600 mt-1 whitespace-pre-wrap">{viewingInvoice.fromAddress || '123 Construction Avenue\nTech Park, Bangalore 560001'}</p>
+                <p className="text-sm text-slate-600 mt-1">GSTIN: {viewingInvoice.fromGSTIN || '29ABCDE1234F1Z5'}</p>
               </div>
               <div className="text-right">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">To</h3>
@@ -230,7 +242,7 @@ export default function InvoiceGenerator() {
                   <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-center w-1/6">Qty</th>
                   <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Rate</th>
                   {!isViewPayslip && (
-                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">GST %</th>
+                    <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6 pr-8">GST %</th>
                   )}
                   <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Amount</th>
                 </tr>
@@ -242,7 +254,7 @@ export default function InvoiceGenerator() {
                     <td className="py-3 text-center text-slate-600">{item.qty}</td>
                     <td className="py-3 text-right text-slate-600">{formatCurrency(item.rate)}</td>
                     {!isViewPayslip && (
-                      <td className="py-3 text-right text-slate-600">{item.gstPercent}%</td>
+                      <td className="py-3 text-right text-slate-600 pr-8">{item.gstPercent}%</td>
                     )}
                     <td className="py-3 text-right font-medium text-slate-800">{formatCurrency(item.qty * item.rate)}</td>
                   </tr>
@@ -276,6 +288,13 @@ export default function InvoiceGenerator() {
             </div>
 
             <div className="mt-16 pt-8 border-t border-slate-200">
+              <div className="flex justify-end mb-12">
+                <div className="text-center w-48">
+                  <div className="border-t border-slate-800 pt-2 font-bold text-slate-800">
+                    Authorized Signatory
+                  </div>
+                </div>
+              </div>
               {isViewPayslip && (
                 <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
               )}
@@ -364,23 +383,55 @@ export default function InvoiceGenerator() {
             <div className="flex items-center gap-3">
               <img src={logoImg} alt="BB Builders Logo" className="h-20 object-contain" />
               <div>
-                <p className="text-sm text-slate-500 font-medium">Enterprise Construction & Management</p>
+                <p className="text-sm text-slate-500 font-medium">BB Builders</p>
               </div>
             </div>
             <div className="text-right">
               <h2 className="text-3xl font-light text-slate-400 uppercase tracking-widest">{invoiceType}</h2>
-              <p className="text-slate-800 font-semibold mt-2">No: <span className="font-mono text-slate-600">DRAFT</span></p>
-              <p className="text-sm text-slate-500">Date: {new Date().toISOString().split('T')[0]}</p>
+              <p className="text-slate-800 font-semibold mt-2 flex justify-end items-center gap-2">
+                No: 
+                <input 
+                  type="text" 
+                  value={invoiceNumber} 
+                  onChange={e => setInvoiceNumber(e.target.value)} 
+                  className="font-mono text-slate-600 w-32 text-right bg-transparent focus:outline-none focus:border-b focus:border-blue-300 print:border-none" 
+                />
+              </p>
+              <div className="flex justify-end items-center gap-2 mt-1">
+                <span className="text-sm text-slate-500">Date:</span>
+                <input 
+                  type="date" 
+                  value={invoiceDate} 
+                  onChange={e => setInvoiceDate(e.target.value)}
+                  className="text-sm text-slate-600 bg-transparent focus:outline-none print:border-none" 
+                />
+              </div>
             </div>
           </div>
 
           <div className="flex justify-between mt-8 mb-12">
-            <div>
+            <div className="w-1/3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">From</h3>
-              <p className="font-bold text-slate-800">BB Builders ERP</p>
-              <p className="text-sm text-slate-600 mt-1">123 Construction Avenue</p>
-              <p className="text-sm text-slate-600">Tech Park, Bangalore 560001</p>
-              <p className="text-sm text-slate-600">GSTIN: 29ABCDE1234F1Z5</p>
+              <input 
+                type="text" 
+                value={fromName} 
+                onChange={e => setFromName(e.target.value)} 
+                className="font-bold text-slate-800 bg-transparent w-full focus:outline-none print:border-none" 
+              />
+              <textarea 
+                value={fromAddress} 
+                onChange={e => setFromAddress(e.target.value)} 
+                className="text-sm text-slate-600 mt-1 bg-transparent w-full focus:outline-none print:border-none resize-none overflow-hidden h-12" 
+              />
+              <div className="flex items-center mt-1">
+                <span className="text-sm text-slate-600">GSTIN: </span>
+                <input 
+                  type="text" 
+                  value={fromGSTIN} 
+                  onChange={e => setFromGSTIN(e.target.value)} 
+                  className="text-sm text-slate-600 bg-transparent w-full focus:outline-none print:border-none ml-1" 
+                />
+              </div>
             </div>
             <div className="text-right">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">To</h3>
@@ -407,7 +458,7 @@ export default function InvoiceGenerator() {
                 <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-center w-1/6">Qty</th>
                 <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Rate</th>
                 {!isPayslip && (
-                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">GST %</th>
+                  <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6 pr-8">GST %</th>
                 )}
                 <th className="py-3 text-sm font-bold text-slate-800 uppercase tracking-wider text-right w-1/6">Amount</th>
                 <th className="py-3 w-10 print:hidden"></th>
@@ -442,7 +493,7 @@ export default function InvoiceGenerator() {
                     />
                   </td>
                   {!isPayslip && (
-                    <td className="py-3 text-right">
+                    <td className="py-3 text-right pr-8">
                       <div className="flex items-center justify-end gap-1">
                         <input 
                           type="number" 
@@ -506,6 +557,13 @@ export default function InvoiceGenerator() {
           </div>
 
           <div className="mt-16 pt-8 border-t border-slate-200">
+            <div className="flex justify-end mb-12">
+              <div className="text-center w-48">
+                <div className="border-t border-slate-800 pt-2 font-bold text-slate-800">
+                  Authorized Signatory
+                </div>
+              </div>
+            </div>
             {isPayslip && (
               <p className="text-xs text-slate-600 mb-6">This payslip is a record of your salary distribution for the specified period.</p>
             )}

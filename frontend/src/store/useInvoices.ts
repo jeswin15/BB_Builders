@@ -17,6 +17,9 @@ export interface SavedInvoice {
   targetName: string;
   targetRoleOrProject: string;
   targetLocationOrSite: string;
+  fromName?: string;
+  fromAddress?: string;
+  fromGSTIN?: string;
   items: InvoiceLineItem[];
   subtotal: number;
   totalGst: number;
