@@ -104,10 +104,10 @@ export default function Sites() {
 
     const siteWorkersStats = workers
       .map(w => {
-        const siteAttendance = w.attendance?.filter(a => a.site === viewingSite.name && (a.status === 'Present' || a.status === 'Half-day')) || [];
+        const siteAttendance = w.attendance?.filter(a => a.site === viewingSite.name && (a.status === 'Present' || a.status === 'Half-Day')) || [];
         if (siteAttendance.length === 0) return null;
         
-        const totalDays = siteAttendance.reduce((sum, a) => sum + (a.status === 'Half-day' ? 0.5 : 1), 0);
+        const totalDays = siteAttendance.reduce((sum, a) => sum + (a.status === 'Half-Day' ? 0.5 : 1), 0);
         const totalWages = siteAttendance.reduce((sum, a) => sum + (a.wage || 0), 0);
         
         return {
