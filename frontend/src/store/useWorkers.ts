@@ -18,6 +18,7 @@ export interface Worker {
     paid?: boolean;
     wage?: number;
     site?: string;
+    paidDate?: string;
   }[];
 }
 

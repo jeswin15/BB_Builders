@@ -11,6 +11,7 @@ class WorkerAttendance(BaseModel):
     paid: bool = False
     wage: float = 0.0
     site: str = ""
+    paidDate: Optional[str] = None
 
 class WorkerModel(BaseModel):
     id: str
