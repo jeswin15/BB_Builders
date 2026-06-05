@@ -22,6 +22,12 @@ export default function Finance() {
     amount: 0,
     site: ''
   });
+  
+  const [payrollModal, setPayrollModal] = useState<{ isOpen: boolean, worker: any, date: string }>({
+    isOpen: false,
+    worker: null,
+    date: new Date().toISOString().split('T')[0]
+  });
 
   const tabs = [
     { id: 'payroll', label: 'Payroll & Advances' },
@@ -47,7 +53,7 @@ export default function Finance() {
     return `₹${val.toLocaleString()}`;
   };
 
-  const handleProcessPayroll = (worker: any) => {
+  const handleProcessPayrollClick = (worker: any) => {
     const netPayable = (worker.balance || 0) - (worker.advances || 0);
     
     if (netPayable <= 0 && worker.balance <= 0) {
@@ -55,7 +61,15 @@ export default function Finance() {
       return;
     }
 
-    if (window.confirm(`Process payroll of ₹${netPayable.toLocaleString()} for ${worker.name}?`)) {
+    setPayrollModal({ isOpen: true, worker, date: new Date().toISOString().split('T')[0] });
+  };
+
+  const confirmPayroll = () => {
+    const worker = payrollModal.worker;
+    const date = payrollModal.date;
+    if (!worker) return;
+    
+    const netPayable = (worker.balance || 0) - (worker.advances || 0);
       
       // Calculate Site-Specific Wages from Unpaid Attendance
       const siteWages: Record<string, number> = {};
@@ -85,7 +99,7 @@ export default function Finance() {
       if (worker.advances && worker.advances > 0) {
         addTransaction({
           id: `TRX-${Date.now().toString().slice(-5)}-ADV`,
-          date: new Date().toISOString().split('T')[0],
+          date: date,
           type: 'Income',
           category: 'Other',
           description: `Advance Recovery from Payroll for ${worker.name} (${worker.id})`,
@@ -98,7 +112,7 @@ export default function Finance() {
         if (amount > 0) {
           addTransaction({
             id: `TRX-${Date.now().toString().slice(-5)}-PAY${idx}`,
-            date: new Date().toISOString().split('T')[0],
+            date: date,
             type: 'Expense',
             category: 'Payroll',
             description: `Payroll processed for ${worker.name} (${worker.id})`,
@@ -111,7 +125,8 @@ export default function Finance() {
       // 3. Mark all attendance as paid
       const updatedAttendance = worker.attendance?.map((record: any) => ({
         ...record,
-        paid: true
+        paid: true,
+        paidDate: date
       }));
 
       // 4. Reset Worker Balance
@@ -121,8 +136,8 @@ export default function Finance() {
         attendance: updatedAttendance
       });
 
-      alert(`Payroll processed successfully for ${worker.name}! Expenses have been properly allocated to sites.`);
-    }
+      setPayrollModal({ isOpen: false, worker: null, date: '' });
+      alert(`Payroll processed successfully for ${worker.name} on ${date}!`);
   };
 
   const handleAddTransaction = async (e: React.FormEvent) => {
@@ -304,7 +319,7 @@ export default function Finance() {
                               </button>
                               {balance > 0 || advances > 0 ? (
                                 <button 
-                                  onClick={() => handleProcessPayroll(worker)}
+                                  onClick={() => handleProcessPayrollClick(worker)}
                                   className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition-colors flex items-center gap-1"
                                 >
                                   <CheckCircle2 size={16} /> Pay
@@ -501,6 +516,64 @@ export default function Finance() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Payroll Modal */}
+      {payrollModal.isOpen && payrollModal.worker && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h2 className="text-xl font-bold text-slate-800">Process Payroll</h2>
+              <button 
+                onClick={() => setPayrollModal({ isOpen: false, worker: null, date: '' })}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Worker</p>
+                <p className="text-lg font-bold text-slate-800">{payrollModal.worker.name}</p>
+              </div>
+
+              <div>
+                <p className="text-sm text-slate-500 font-medium">Net Payable Amount</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  ₹{((payrollModal.worker.balance || 0) - (payrollModal.worker.advances || 0)).toLocaleString()}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Payment Date</label>
+                <input 
+                  type="date" 
+                  value={payrollModal.date}
+                  onChange={(e) => setPayrollModal({ ...payrollModal, date: e.target.value })}
+                  className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <p className="text-xs text-slate-500 mt-1">This date will be recorded in the worker's history.</p>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  onClick={() => setPayrollModal({ isOpen: false, worker: null, date: '' })}
+                  className="flex-1 px-4 py-3 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmPayroll}
+                  className="flex-1 px-4 py-3 text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg font-semibold transition-colors"
+                >
+                  Confirm Pay
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
