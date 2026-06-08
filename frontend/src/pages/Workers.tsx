@@ -105,6 +105,7 @@ export default function Workers() {
                   <option>Helper</option>
                   <option>Painter</option>
                   <option>Plumber</option>
+                  <option>Centering</option>
                 </select>
               </div>
               <div className="space-y-2">
@@ -371,6 +372,9 @@ export default function Workers() {
             <option>Electrician</option>
             <option>Carpenter</option>
             <option>Helper</option>
+            <option>Painter</option>
+            <option>Plumber</option>
+            <option>Centering</option>
           </select>
         </div>
 

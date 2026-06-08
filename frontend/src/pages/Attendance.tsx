@@ -135,9 +135,18 @@ export default function Attendance() {
   const isAdmin = user?.role === 'Admin' || user?.role === 'Super Admin';
   
   const canProcess = (!isProcessedForDate) && (
-    (isToday && isPast5PM()) || 
     (isPastDay && isAdmin)
   );
+
+  const [hasAutoProcessed, setHasAutoProcessed] = useState(false);
+
+  // Auto-lock at 5 PM if viewing today's attendance
+  useEffect(() => {
+    if (isToday && isPast5PM() && !isProcessedForDate && records.length > 0 && !hasAutoProcessed) {
+      setHasAutoProcessed(true);
+      handleSaveChanges(true, false);
+    }
+  }, [isToday, currentTime, isProcessedForDate, records, hasAutoProcessed]);
 
   return (
     <div className="space-y-6">
@@ -199,12 +208,12 @@ export default function Attendance() {
         </div>
       )}
 
-      {!isProcessed && !canProcess && isToday && (
+      {!isProcessed && !isPast5PM() && isToday && (
         <div className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg flex items-start gap-3">
           <Clock className="text-amber-500 shrink-0 mt-0.5" size={20} />
           <div>
-            <h3 className="font-semibold text-amber-800">Checkout Locked</h3>
-            <p className="text-sm text-amber-700">Daily processing and salary logging is only available after <strong>5:00 PM IST</strong>. Please wait until the end of the workday.</p>
+            <h3 className="font-semibold text-amber-800">Checkout Pending</h3>
+            <p className="text-sm text-amber-700">Attendance will be automatically locked and processed at <strong>5:00 PM IST</strong>.</p>
           </div>
         </div>
       )}
@@ -292,8 +301,8 @@ export default function Attendance() {
           </table>
         </div>
         
-        {/* End of Day Processor Button */}
-        {!isProcessed && (isToday || (isPastDay && isAdmin)) && (
+        {/* End of Day Processor Button (Only for past days now) */}
+        {!isProcessed && isPastDay && isAdmin && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
             <button 
               onClick={() => handleSaveChanges(true, false)}
@@ -305,7 +314,7 @@ export default function Attendance() {
               }`}
             >
               <Clock size={18} />
-              {isPastDay ? 'Process Historical Attendance & Log Salary' : 'Process 5:00 PM Checkout & Log Salary'}
+              Process Historical Attendance & Log Salary
             </button>
           </div>
         )}
