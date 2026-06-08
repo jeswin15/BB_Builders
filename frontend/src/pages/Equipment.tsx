@@ -15,6 +15,8 @@ export default function Equipment() {
   
   const [isAdding, setIsAdding] = useState(false);
   const [manageItem, setManageItem] = useState<EquipmentType | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('All Types');
   
   const [newItem, setNewItem] = useState({
     name: '', code: '', type: 'Machinery', owned: true, status: 'Available', site: '',
@@ -113,6 +115,12 @@ export default function Equipment() {
   const handleInputChange = (field: string, value: any) => {
     setNewItem({ ...newItem, [field]: value });
   };
+
+  const filteredEquipment = equipment.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.code.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === 'All Types' || item.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
 
   if (isAdding) {
     return (
@@ -296,9 +304,19 @@ export default function Equipment() {
         <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center gap-4 bg-slate-50/50">
           <div className="relative w-full sm:flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input type="text" placeholder="Search equipment by code or name..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input 
+              type="text" 
+              placeholder="Search equipment by code or name..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+            />
           </div>
-          <select className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          <select 
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
             <option>All Types</option>
             <option>Machinery</option>
             <option>Vehicles</option>
@@ -307,11 +325,11 @@ export default function Equipment() {
         </div>
 
         <div className="overflow-x-auto">
-          {equipment.length === 0 ? (
+          {filteredEquipment.length === 0 ? (
              <div className="p-12 text-center flex flex-col items-center">
                <Wrench size={48} className="text-slate-300 mb-4" />
                <h3 className="text-lg font-semibold text-slate-800">No Equipment Found</h3>
-               <p className="text-slate-500 mt-2 max-w-md mx-auto">You haven't added any equipment yet. Click 'Add Equipment' to get started.</p>
+               <p className="text-slate-500 mt-2 max-w-md mx-auto">Try adjusting your search criteria or add new equipment.</p>
              </div>
           ) : (
             <table className="w-full text-left text-sm">
@@ -327,7 +345,7 @@ export default function Equipment() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {equipment.map((item) => (
+                {filteredEquipment.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">

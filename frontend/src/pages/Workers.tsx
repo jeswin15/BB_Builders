@@ -13,6 +13,8 @@ export default function Workers() {
   const [editingWorker, setEditingWorker] = useState<any>(null);
   const [viewingWorker, setViewingWorker] = useState<any>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [skillFilter, setSkillFilter] = useState('All Skills');
   
   // Calendar States for the View Log Modal
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
@@ -64,6 +66,17 @@ export default function Workers() {
   };
 
   const activeWorker = isRegistering ? newWorker : editingWorker;
+
+  const filteredWorkers = workers.filter(worker => {
+    const matchesSearch = 
+      worker.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      worker.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      worker.skill.toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesSkill = skillFilter === 'All Skills' || worker.skill === skillFilter;
+    
+    return matchesSearch && matchesSkill;
+  });
 
   if (isRegistering || editingWorker) {
     return (
@@ -363,10 +376,16 @@ export default function Workers() {
             <input 
               type="text" 
               placeholder="Search by name, skill, or ID..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
             />
           </div>
-          <select className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          <select 
+            value={skillFilter}
+            onChange={(e) => setSkillFilter(e.target.value)}
+            className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
             <option>All Skills</option>
             <option>Mason</option>
             <option>Electrician</option>
@@ -390,7 +409,7 @@ export default function Workers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {workers.map((worker) => (
+              {filteredWorkers.map((worker) => (
                 <tr key={worker.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div 
