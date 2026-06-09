@@ -1,7 +1,9 @@
+from database import get_db
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select, update, delete
 from models.schema import FinanceTransaction
 
