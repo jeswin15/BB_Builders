@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Any
-from database import get_db
 
 router = APIRouter(prefix="/api/invoices", tags=["invoices"])
 
@@ -22,19 +21,24 @@ class InvoiceModel(BaseModel):
     total: float
 
 @router.get("", response_model=List[InvoiceModel])
-async def get_invoices(db=Depends(get_db)):
-    cursor = db["invoices"].find()
-    invoices = await cursor.to_list(length=1000)
-    for i in invoices:
-        i.pop('_id', None)
-    return invoices
+def get_all(db: Session = Depends(get_db)):
+    result = db.execute(select(Invoice))
+    return [r.data for r in result.scalars().all()]
 
 @router.post("", response_model=InvoiceModel)
-async def create_invoice(invoice: InvoiceModel, db=Depends(get_db)):
-    await db["invoices"].insert_one(invoice.model_dump())
-    return invoice
+def create_item(item: InvoiceModel, db: Session = Depends(get_db)):
+    db.add(Invoice(id=item.id, data=item.model_dump()))
+    db.commit()
+    return item
 
-@router.delete("/{invoice_id}")
-async def delete_invoice(invoice_id: str, db=Depends(get_db)):
-    await db["invoices"].delete_one({"id": invoice_id})
+@router.put("/{id}", response_model=InvoiceModel)
+def update_item(id: str, item: InvoiceModel, db: Session = Depends(get_db)):
+    db.execute(update(Invoice).where(Invoice.id == id).values(data=item.model_dump()))
+    db.commit()
+    return item
+
+@router.delete("/{id}")
+def delete_item(id: str, db: Session = Depends(get_db)):
+    db.execute(delete(Invoice).where(Invoice.id == id))
+    db.commit()
     return {"status": "deleted"}

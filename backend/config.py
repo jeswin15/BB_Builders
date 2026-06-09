@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # MongoDB Config
-    MONGODB_URI: str = "mongodb://localhost:27017"
+    DATABASE_URL: str = "mysql+pymysql://3e3vM2fEpj5GyGA.root:aUtMqMdJKA2tKIpU@gateway01.ap-southeast-1.prod.alicloud.tidbcloud.com:4000/bb_builders"
     DATABASE_NAME: str = "bb_builders_erp"
     
     # Auth Config

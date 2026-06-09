@@ -3,12 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
-from database import get_db
+from contextlib import asynccontextmanager
+from database import get_db, init_db
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
 
 app = FastAPI(
     title="BB Builders ERP API",
-    description="Enterprise-grade cloud-based Construction ERP (MongoDB)",
-    version="1.0.0"
+    description="Enterprise-grade cloud-based Construction ERP (TiDB)",
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(

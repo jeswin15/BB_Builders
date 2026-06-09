@@ -1,35 +1,31 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
 from config import settings
-import certifi
+from models.schema import Base
 
-class MongoDBClient:
-    def __init__(self):
-        self.client = None
-        self.db = None
+# Create Sync Engine
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    pool_recycle=3600,
+    pool_pre_ping=True,
+    connect_args={"ssl": {"ssl": True}}
+)
 
-    def connect(self):
-        try:
-            print(f"Connecting to MongoDB at {settings.MONGODB_URI.split('@')[-1]}...")
-            self.client = AsyncIOMotorClient(settings.MONGODB_URI, tlsCAFile=certifi.where())
-            self.db = self.client[settings.DATABASE_NAME]
-            print(f"Connected to MongoDB Atlas: {settings.DATABASE_NAME}")
-        except Exception as e:
-            print(f"Failed to connect to MongoDB: {e}")
+# Create session factory
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine
+)
 
-    def close(self):
-        if self.client:
-            self.client.close()
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
-db_client = MongoDBClient()
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-async def get_db():
-    if db_client.db is None:
-        db_client.connect()
-    return db_client.db
-
-async def get_gridfs():
-    if db_client.db is None:
-        db_client.connect()
-    from motor.motor_asyncio import AsyncIOMotorGridFSBucket
-    return AsyncIOMotorGridFSBucket(db_client.db)
-
+def get_gridfs():
+    raise NotImplementedError("GridFS is no longer supported in TiDB migration.")

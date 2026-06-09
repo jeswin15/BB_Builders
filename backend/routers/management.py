@@ -25,41 +25,25 @@ async def create_client(client: ClientCreate, user: UserInDB = Depends(require_r
     local_db["clients"][client_id] = db_client
     return db_client
 
-@router.get("/clients", response_model=List[ClientInDB])
-async def get_clients(user: UserInDB = Depends(require_role([Role.ADMIN]))):
-    return list(local_db["clients"].values())
+@router.get("", response_model=List[ManagementNoteModel])
+def get_all(db: Session = Depends(get_db)):
+    result = db.execute(select(ManagementNote))
+    return [r.data for r in result.scalars().all()]
 
-# --- Projects ---
-@router.post("/projects", response_model=ProjectInDB)
-async def create_project(project: ProjectCreate, user: UserInDB = Depends(require_role([Role.ADMIN]))):
-    # Verify client exists
-    if project.client_id not in local_db["clients"]:
-        raise HTTPException(status_code=404, detail="Client not found")
-        
-    project_id = str(uuid.uuid4())
-    db_project = ProjectInDB(**project.model_dump(), id=project_id)
-    local_db["projects"][project_id] = db_project
-    return db_project
+@router.post("", response_model=ManagementNoteModel)
+def create_item(item: ManagementNoteModel, db: Session = Depends(get_db)):
+    db.add(ManagementNote(id=item.id, data=item.model_dump()))
+    db.commit()
+    return item
 
-@router.get("/projects", response_model=List[ProjectInDB])
-async def get_projects(user: UserInDB = Depends(require_role([Role.ADMIN, Role.SITE_MANAGER]))):
-    return list(local_db["projects"].values())
+@router.put("/{id}", response_model=ManagementNoteModel)
+def update_item(id: str, item: ManagementNoteModel, db: Session = Depends(get_db)):
+    db.execute(update(ManagementNote).where(ManagementNote.id == id).values(data=item.model_dump()))
+    db.commit()
+    return item
 
-# --- Sites ---
-@router.post("/sites", response_model=SiteInDB)
-async def create_site(site: SiteCreate, user: UserInDB = Depends(require_role([Role.ADMIN]))):
-    # Verify project exists
-    if site.project_id not in local_db["projects"]:
-        raise HTTPException(status_code=404, detail="Project not found")
-        
-    site_id = str(uuid.uuid4())
-    db_site = SiteInDB(**site.model_dump(), id=site_id)
-    local_db["sites"][site_id] = db_site
-    return db_site
-
-@router.get("/sites", response_model=List[SiteInDB])
-async def get_sites(user: UserInDB = Depends(require_role([Role.ADMIN, Role.SITE_MANAGER]))):
-    # Site managers might only see their own sites in a real scenario
-    if user.role == Role.SITE_MANAGER:
-        return [s for s in local_db["sites"].values() if s.site_engineer_id == user.id]
-    return list(local_db["sites"].values())
+@router.delete("/{id}")
+def delete_item(id: str, db: Session = Depends(get_db)):
+    db.execute(delete(ManagementNote).where(ManagementNote.id == id))
+    db.commit()
+    return {"status": "deleted"}

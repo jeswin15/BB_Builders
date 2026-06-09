@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Optional
-from database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
+from models.schema import FinanceTransaction
 
 router = APIRouter(prefix="/api/finance", tags=["finance"])
 
@@ -14,15 +16,25 @@ class TransactionModel(BaseModel):
     amount: float
     site: Optional[str] = None
 
-@router.get("/transactions", response_model=List[TransactionModel])
-async def get_transactions(db=Depends(get_db)):
-    cursor = db["transactions"].find()
-    transactions = await cursor.to_list(length=1000)
-    for t in transactions:
-        t.pop('_id', None)
-    return transactions
+@router.get("", response_model=List[TransactionModel])
+def get_all(db: Session = Depends(get_db)):
+    result = db.execute(select(FinanceTransaction))
+    return [r.data for r in result.scalars().all()]
 
-@router.post("/transactions", response_model=TransactionModel)
-async def create_transaction(transaction: TransactionModel, db=Depends(get_db)):
-    await db["transactions"].insert_one(transaction.model_dump())
-    return transaction
+@router.post("", response_model=TransactionModel)
+def create_item(item: TransactionModel, db: Session = Depends(get_db)):
+    db.add(FinanceTransaction(id=item.id, data=item.model_dump()))
+    db.commit()
+    return item
+
+@router.put("/{id}", response_model=TransactionModel)
+def update_item(id: str, item: TransactionModel, db: Session = Depends(get_db)):
+    db.execute(update(FinanceTransaction).where(FinanceTransaction.id == id).values(data=item.model_dump()))
+    db.commit()
+    return item
+
+@router.delete("/{id}")
+def delete_item(id: str, db: Session = Depends(get_db)):
+    db.execute(delete(FinanceTransaction).where(FinanceTransaction.id == id))
+    db.commit()
+    return {"status": "deleted"}

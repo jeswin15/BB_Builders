@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-from database import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
+from models.schema import Worker
 
 router = APIRouter(prefix="/api/workers", tags=["workers"])
 
@@ -27,24 +29,24 @@ class WorkerModel(BaseModel):
     attendance: List[WorkerAttendance]
 
 @router.get("", response_model=List[WorkerModel])
-async def get_workers(db=Depends(get_db)):
-    cursor = db["workers"].find()
-    workers = await cursor.to_list(length=1000)
-    for w in workers:
-        w.pop('_id', None)
-    return workers
+def get_all(db: Session = Depends(get_db)):
+    result = db.execute(select(Worker))
+    return [r.data for r in result.scalars().all()]
 
 @router.post("", response_model=WorkerModel)
-async def create_worker(worker: WorkerModel, db=Depends(get_db)):
-    await db["workers"].insert_one(worker.model_dump())
-    return worker
+def create_item(item: WorkerModel, db: Session = Depends(get_db)):
+    db.add(Worker(id=item.id, data=item.model_dump()))
+    db.commit()
+    return item
 
-@router.put("/{worker_id}", response_model=WorkerModel)
-async def update_worker(worker_id: str, worker: WorkerModel, db=Depends(get_db)):
-    await db["workers"].update_one({"id": worker_id}, {"$set": worker.model_dump()})
-    return worker
+@router.put("/{id}", response_model=WorkerModel)
+def update_item(id: str, item: WorkerModel, db: Session = Depends(get_db)):
+    db.execute(update(Worker).where(Worker.id == id).values(data=item.model_dump()))
+    db.commit()
+    return item
 
-@router.delete("/{worker_id}")
-async def delete_worker(worker_id: str, db=Depends(get_db)):
-    await db["workers"].delete_one({"id": worker_id})
+@router.delete("/{id}")
+def delete_item(id: str, db: Session = Depends(get_db)):
+    db.execute(delete(Worker).where(Worker.id == id))
+    db.commit()
     return {"status": "deleted"}
