@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Calendar as CalendarIcon, CheckCircle, XCircle, Clock, AlertCircle, MapPin, CheckCircle2, Unlock } from 'lucide-react';
 import { useWorkers } from '../store/useWorkers';
 import { useSites } from '../store/useSites';
@@ -20,23 +20,32 @@ export default function Attendance() {
   const isProcessedForDate = workers.length > 0 && workers.some(w => w.attendance?.some(a => a.date === date));
   const isProcessed = isProcessedForDate && !isUnlocked;
   
-  // Reload records whenever date changes or worker list is updated
+  const prevDateRef = useRef(date);
+
+  // Reload records whenever date changes, but preserve local edits if just a worker polling update
   useEffect(() => {
-    setRecords(
+    const isDateChange = prevDateRef.current !== date;
+    prevDateRef.current = date;
+
+    setRecords(prevRecords => 
       workers.map(w => {
         const pastRecord = w.attendance?.find(a => a.date === date);
+        const existingRecord = isDateChange ? null : prevRecords.find(r => r.id === w.id);
+
         return {
           id: w.id,
           name: w.name,
           skill: w.skill,
-          site: pastRecord?.site || w.site,
+          site: existingRecord ? existingRecord.site : (pastRecord?.site || w.site),
           baseWage: w.dailyRate,
-          status: pastRecord ? pastRecord.status : (w.status === 'On Leave' ? 'Absent' : 'Present'),
-          overtime: 0
+          status: existingRecord ? existingRecord.status : (pastRecord ? pastRecord.status : (w.status === 'On Leave' ? 'Absent' : 'Present')),
+          overtime: existingRecord ? existingRecord.overtime : 0
         };
       })
     );
-    setIsUnlocked(false);
+    if (isDateChange) {
+      setIsUnlocked(false);
+    }
   }, [workers, date]);
 
   const activeSiteNames = ['Unassigned', ...sites.filter(s => s.status === 'Active').map(s => s.name)];
