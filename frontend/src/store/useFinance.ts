@@ -21,7 +21,7 @@ export const useFinance = create<FinanceState>((set) => ({
   transactions: [],
   fetchTransactions: async () => {
     try {
-      const response = await api.get('/finance/transactions');
+      const response = await api.get('/finance');
       set({ transactions: response.data });
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
@@ -29,7 +29,7 @@ export const useFinance = create<FinanceState>((set) => ({
   },
   addTransaction: async (transaction) => {
     try {
-      const response = await api.post('/finance/transactions', transaction);
+      const response = await api.post('/finance', transaction);
       set((state) => ({ transactions: [response.data, ...state.transactions] }));
     } catch (error) {
       console.error('Failed to add transaction:', error);
