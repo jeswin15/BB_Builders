@@ -1,5 +1,7 @@
 from database import get_db
 from sqlalchemy.orm import Session
+from sqlalchemy import select, update, delete
+from models.schema import Equipment
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List

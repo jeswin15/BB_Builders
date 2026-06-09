@@ -1,5 +1,7 @@
 from database import get_db
 from sqlalchemy.orm import Session
+from sqlalchemy import select, update, delete
+from models.schema import InventoryItem
 from fastapi import APIRouter, Depends, HTTPException
 from models.user import UserInDB, Role
 from models.inventory import (
