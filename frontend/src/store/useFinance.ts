@@ -23,16 +23,18 @@ export const useFinance = create<FinanceState>((set) => ({
     try {
       const response = await api.get('/finance');
       set({ transactions: response.data });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch transactions:', error);
+      alert('Failed to fetch finance: ' + (error.response?.data?.detail || error.message));
     }
   },
   addTransaction: async (transaction) => {
     try {
       const response = await api.post('/finance', transaction);
       set((state) => ({ transactions: [response.data, ...state.transactions] }));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to add transaction:', error);
+      alert('Failed to add transaction: ' + (error.response?.data?.detail || error.message));
     }
   },
 }));
