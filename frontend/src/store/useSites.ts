@@ -16,6 +16,7 @@ interface SitesState {
   fetchSites: () => Promise<void>;
   addSite: (site: Site) => Promise<void>;
   updateSite: (id: string, updatedData: Partial<Site>) => Promise<void>;
+  deleteSite: (id: string) => Promise<void>;
 }
 
 export const useSites = create<SitesState>((set) => ({
@@ -46,6 +47,16 @@ export const useSites = create<SitesState>((set) => ({
       }));
     } catch (error) {
       console.error('Failed to update site:', error);
+    }
+  },
+  deleteSite: async (id) => {
+    try {
+      await api.delete(`/sites/${id}`);
+      set((state) => ({
+        sites: state.sites.filter((s) => s.id !== id)
+      }));
+    } catch (error) {
+      console.error('Failed to delete site:', error);
     }
   },
 }));

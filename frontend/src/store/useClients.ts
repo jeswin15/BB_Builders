@@ -15,6 +15,7 @@ interface ClientsState {
   fetchClients: () => Promise<void>;
   addClient: (client: Client) => Promise<void>;
   updateClient: (id: string, updatedData: Partial<Client>) => Promise<void>;
+  deleteClient: (id: string) => Promise<void>;
 }
 
 export const useClients = create<ClientsState>((set) => ({
@@ -50,6 +51,16 @@ export const useClients = create<ClientsState>((set) => ({
       }));
     } catch (error) {
       console.error('Failed to update client:', error);
+    }
+  },
+  deleteClient: async (id) => {
+    try {
+      await api.delete(`/clients/${id}`);
+      set((state) => ({
+        clients: state.clients.filter((c) => c.id !== id)
+      }));
+    } catch (error) {
+      console.error('Failed to delete client:', error);
     }
   },
 }));

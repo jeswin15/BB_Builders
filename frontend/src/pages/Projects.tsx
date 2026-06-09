@@ -322,8 +322,20 @@ export default function Projects() {
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete ${project.name}?`)) {
+                      if (window.confirm(`Are you sure you want to delete ${project.name}? This will also delete the associated Client and Site.`)) {
                         deleteProject(project.id);
+                        
+                        // Cascade delete Client
+                        const clientToDelete = useClients.getState().clients.find(c => c.company === project.client);
+                        if (clientToDelete) {
+                          useClients.getState().deleteClient(clientToDelete.id);
+                        }
+                        
+                        // Cascade delete Site
+                        const siteToDelete = useSites.getState().sites.find(s => s.project === project.name);
+                        if (siteToDelete) {
+                          useSites.getState().deleteSite(siteToDelete.id);
+                        }
                       }
                     }}
                     className="text-rose-500 hover:text-rose-700 transition-colors p-1"
