@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Plus, Search, Briefcase, Calendar, TrendingUp, CheckCircle, Clock, ArrowLeft, Save } from 'lucide-react';
+import { Plus, Search, Briefcase, Calendar, TrendingUp, CheckCircle, Clock, ArrowLeft, Save, Trash2 } from 'lucide-react';
 import { useProjects } from '../store/useProjects';
 import { useSites } from '../store/useSites';
 import { useClients } from '../store/useClients';
 
 export default function Projects() {
-  const { projects, addProject, updateProject } = useProjects();
+  const { projects, addProject, updateProject, deleteProject } = useProjects();
   const { addSite } = useSites();
   const { addClient } = useClients();
   const [isAdding, setIsAdding] = useState(false);
@@ -319,21 +319,34 @@ export default function Projects() {
   
               <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
                 <span className="text-xs font-medium text-slate-400">{project.id}</span>
-                {project.status === 'Pending' ? (
+                <div className="flex items-center gap-3">
                   <button 
-                    onClick={() => handleApprove(project)}
-                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200"
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete ${project.name}?`)) {
+                        deleteProject(project.id);
+                      }
+                    }}
+                    className="text-rose-500 hover:text-rose-700 transition-colors p-1"
+                    title="Delete Project"
                   >
-                    <CheckCircle size={16} /> Approve & Move to Sites
+                    <Trash2 size={16} />
                   </button>
-                ) : (
-                  <button 
-                    onClick={() => setEditingProject(project)}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    Manage Project →
-                  </button>
-                )}
+                  {project.status === 'Pending' ? (
+                    <button 
+                      onClick={() => handleApprove(project)}
+                      className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200"
+                    >
+                      <CheckCircle size={16} /> Approve & Move to Sites
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => setEditingProject(project)}
+                      className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      Manage Project →
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           ))}

@@ -16,6 +16,7 @@ interface ProjectsState {
   fetchProjects: () => Promise<void>;
   addProject: (project: Project) => Promise<void>;
   updateProject: (id: string, updatedData: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
 }
 
 export const useProjects = create<ProjectsState>((set) => ({
@@ -47,6 +48,16 @@ export const useProjects = create<ProjectsState>((set) => ({
       }));
     } catch (error) {
       console.error('Failed to update project:', error);
+    }
+  },
+  deleteProject: async (id) => {
+    try {
+      await api.delete(`/projects/${id}`);
+      set((state) => ({
+        projects: state.projects.filter((p) => p.id !== id)
+      }));
+    } catch (error) {
+      console.error('Failed to delete project:', error);
     }
   },
 }));
